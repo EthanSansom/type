@@ -11,7 +11,7 @@ named_type <- S7::new_class(
   package = "type",
   parent = type,
   properties = list(
-    refinements = S7::new_property(S7::class_list, default = list())
+    traits = S7::new_property(S7::class_list, default = list())
   )
 )
 
@@ -21,7 +21,7 @@ refined_type <- S7::new_class(
   parent = type,
   properties = list(
     parent_type = named_type,
-    refinements = S7::new_property(S7::class_list, default = list()),
+    traits = S7::new_property(S7::class_list, default = list()),
     modifications = S7::new_property(S7::class_character, default = character())
   )
 )
@@ -98,7 +98,7 @@ new_trait <- function(
       trait_instance <- (!!trait_class)(!!!parameters_syms)
       new_refined_type(
         parent_type = .type,
-        refinements = list(trait_instance)
+        traits = list(trait_instance)
       )
     }),
     env = parent_env
@@ -119,7 +119,7 @@ trait_class <- function(x) {
 is_bare_trait <- function(x) {
   is_refined_type(x) &&
     is_type_any(x@parent_type) &&
-    length(x@refinements) == 1L
+    length(x@traits) == 1L
 }
 
 # NOTE: Low-level constructor
@@ -135,8 +135,8 @@ new_named_type <- function(
   name,
   package = "type",
   parent_type = t_any,
-  refinements = list(),
-  inherit_refinements = FALSE
+  traits = list(),
+  inherit_traits = FALSE
 ) {
   if (!S7::S7_inherits(parent_type, named_type)) {
     rlang::abort("`parent_type` must be a <named_type>.", .internal = TRUE)
@@ -148,28 +148,28 @@ new_named_type <- function(
   )
 
   # Each refinement is packaged as a single refinement on `t_any`
-  refinements <- lapply(refinements, \(x) x@refinements[[1]])
-  if (inherit_refinements) {
-    refinements <- c(parent_type@refinements, refinements)
+  traits <- lapply(traits, \(x) x@traits[[1]])
+  if (inherit_traits) {
+    traits <- c(parent_type@traits, traits)
   }
-  s7_class(refinements = refinements)
+  s7_class(traits = traits)
 }
 
 new_refined_type <- function(
   parent_type,
-  refinements = list(),
+  traits = list(),
   modifications = character()
 ) {
   if (!S7::S7_inherits(parent_type, type)) {
     rlang::abort("`parent_type` must be a <type>.", .internal = TRUE)
   }
   if (S7::S7_inherits(parent_type, refined_type)) {
-    refinements <- c(parent_type@refinements, refinements)
+    traits <- c(parent_type@traits, traits)
     modifications <- c(parent_type@modifications, modifications)
     parent_type <- parent_type@parent_type
   }
   refined_type(
-    refinements = refinements,
+    traits = traits,
     modifications = modifications,
     parent_type = parent_type
   )
@@ -179,7 +179,12 @@ new_refined_type <- function(
 
 ## trait -----------------------------------------------------------------------
 
-trait_name <- S7::new_generic("trait_name", c("trait"))
+trait_name <- S7::new_generic(
+  "trait_name", 
+  c("trait")
+)
+
+# method(trait_name, trait) <- function(trait) {}
 
 trait_test <- S7::new_generic(
   "trait_test",
@@ -189,6 +194,8 @@ trait_test <- S7::new_generic(
   }
 )
 
+# method(trait_test, trait) <- function(trait, obj) {}
+
 trait_absent_message <- S7::new_generic(
   "trait_absent_message",
   c("trait"),
@@ -197,13 +204,7 @@ trait_absent_message <- S7::new_generic(
   }
 )
 
-trait_absent_string <- S7::new_generic(
-  "trait_absent_string",
-  c("trait"),
-  function(trait, obj, obj_name, ...) {
-    S7::S7_dispatch()
-  }
-)
+# method(trait_absent_message, trait) <- function(trait, obj, obj_name) {}
 
 trait_present_string <- S7::new_generic(
   "trait_present_string",
@@ -213,6 +214,8 @@ trait_present_string <- S7::new_generic(
   }
 )
 
+# method(trait_present_string, trait) <- function(trait, obj_name) {}
+
 trait_validate <- S7::new_generic(
   "trait_validate",
   c("trait"),
@@ -221,18 +224,61 @@ trait_validate <- S7::new_generic(
   }
 )
 
-trait_invalid_message <- S7::new_generic("trait_invalid_message", c("trait"))
+method(trait_validate, trait) <- function(trait, obj, obj_name) {
+  if (rlang::is_true(trait_test(trait, obj))) {
+    NULL
+  } else {
+    trait_absent_message(trait, obj, obj_name)
+  }
+}
 
-trait_inline_rules <- S7::new_generic("trait_inline_rules", c("trait"))
+trait_invalid_message <- S7::new_generic(
+  "trait_invalid_message", 
+  c("trait")
+)
+
+method(trait_invalid_message, trait) <- function(trait) {
+  NULL # Defaults to no checks on invalid inputs
+}
+
+trait_inline_rules <- S7::new_generic(
+  "trait_inline_rules", 
+  c("trait")
+)
+
+method(trait_inline_rules, trait) <- function(trait) {
+  list() # Defaults to not inlining the trait's validation
+}
 
 ## type ------------------------------------------------------------------------
 
-type_name <- S7::new_generic("type_name", c("type"))
+type_name <- S7::new_generic(
+  "type_name", 
+  c("type")
+)
 
-# Unexported, user-generated types are tested using their individual traits
+# method(type_name, type) <- function(type) {}
+
 type_test <- S7::new_generic("type_test", c("type"), function(type, obj, ...) {
   S7::S7_dispatch()
 })
+
+method(type_test, named_type) <- function(type, obj) {
+  for (trait in type@traits) {
+    if (!rlang::is_true(trait_test(trait, obj))) return(FALSE)
+  }
+  TRUE
+}
+
+method(type_test, refined_type) <- function(type, obj) {
+  for (trait in type@parent_type@traits) {
+    if (!rlang::is_true(trait_test(trait, obj))) return(FALSE)
+  }
+  for (trait in type@traits) {
+    if (!rlang::is_true(trait_test(trait, obj))) return(FALSE)
+  }
+  TRUE
+}
 
 #' @description
 #' Header message before the `trait_absent_message()`.
@@ -252,6 +298,10 @@ type_absent_header <- S7::new_generic(
   }
 )
 
+method(type_absent_header, type) <- function(type, obj_name) {
+  character() # Defaults to no additional header
+}
+
 #' @description
 #' Message which replaces the `trait_absent_message()`.
 #'
@@ -269,13 +319,26 @@ type_absent_message <- S7::new_generic(
   }
 )
 
-type_absent_string <- S7::new_generic(
-  "type_absent_string",
-  c("type"),
-  function(type, obj, obj_name, ...) {
-    S7::S7_dispatch()
+method(type_absent_message, named_type) <- function(type, obj, obj_name) {
+  for (trait in type@traits) {
+    if (!rlang::is_true(trait_test(trait, obj))) {
+      return(trait_absent_message(trait, obj, obj_name))
+    }
   }
-)
+}
+
+method(type_absent_message, refined_type) <- function(type, obj, obj_name) {
+  for (trait in type@parent_type@traits) {
+    if (!rlang::is_true(trait_test(trait, obj))) {
+      return(trait_absent_message(trait, obj, obj_name))
+    }
+  }
+  for (trait in type@traits) {
+    if (!rlang::is_true(trait_test(trait, obj))) {
+      return(trait_absent_message(trait, obj, obj_name))
+    }
+  }
+}
 
 type_present_string <- S7::new_generic(
   "type_present_string",
@@ -285,6 +348,27 @@ type_present_string <- S7::new_generic(
   }
 )
 
+method(type_present_string, named_type) <- function(type, obj_name) {
+  traits <- type@traits
+  if (rlang::is_empty(traits)) {
+    return(format_styled("{.arg {obj_name}} is type {.cls type_name(type)}."))
+  }
+  trait_names <- map_chr(traits, trait_name)
+  format_styled(
+    "{.arg {obj_name}} is type {.cls type_name(type)} with traits: <<commas(trait_names)>>."
+  )
+}
+
+method(type_present_string, refined_type) <- function(type, obj_name) {
+  parent_traits <- type@parent_type@traits
+  refinement_traits <- type@traits
+  all_traits <- c(parent_traits, refinement_traits)
+  trait_names <- map_chr(all_traits, trait_name)
+  format_styled(
+    "{.arg {obj_name}} is type {.cls type_name(type)} with traits: <<commas(trait_names)>>."
+  )
+}
+
 type_present_message <- S7::new_generic(
   "type_present_message",
   c("type"),
@@ -292,6 +376,8 @@ type_present_message <- S7::new_generic(
     S7::S7_dispatch()
   }
 )
+
+# TODO: Default
 
 type_validate <- S7::new_generic(
   "type_validate",
@@ -301,28 +387,28 @@ type_validate <- S7::new_generic(
   }
 )
 
+method(type_validate, type) <- function(type, obj, obj_name) {
+  if (rlang::is_true(type_test(type, obj))) {
+    NULL
+  } else {
+    type_absent_message(type, obj, obj_name)
+  }
+}
+
 type_inline_validate_factory <- S7::new_generic(
   "type_inline_validate_factory",
   c("type")
 )
+
+method(type_inline_validate_factory, type) <- function(type) {
+  NULL # Defaults to not inlining the type's validation
+}
 
 # default methods --------------------------------------------------------------
 
 # TODO: Implement default methods for *every* generic.
 
 ## trait -----------------------------------------------------------------------
-
-method(trait_validate, trait) <- function(trait, obj, obj_name) {
-  if (identical(trait_test(trait, obj), TRUE)) {
-    NULL
-  } else {
-    trait_absent_message(trait, obj, obj_name)
-  }
-}
-
-method(trait_inline_rules, trait) <- function(trait) {
-  list()
-}
 
 ## type ------------------------------------------------------------------------
 
@@ -332,53 +418,3 @@ method(trait_inline_rules, trait) <- function(trait) {
 #   `obj_type` is type <type_name> with traits:
 #   * trait_present_string(trait1)
 #   * trait_present_string(trait2)
-
-method(type_test, named_type) <- function(type, obj) {
-  for (trait in type@refinements) {
-    if (!rlang::is_true(trait_test(trait, obj))) return(FALSE)
-  }
-  TRUE
-}
-
-method(type_test, refined_type) <- function(type, obj) {
-  for (trait in type@parent_type@refinements) {
-    if (!rlang::is_true(trait_test(trait, obj))) return(FALSE)
-  }
-  for (trait in type@refinements) {
-    if (!rlang::is_true(trait_test(trait, obj))) return(FALSE)
-  }
-  TRUE
-}
-
-method(type_absent_message, named_type) <- function(type, obj, obj_name) {
-  for (trait in type@refinements) {
-    if (!rlang::is_true(trait_test(trait, obj))) {
-      return(trait_absent_message(trait, obj, obj_name))
-    }
-  }
-}
-
-method(type_absent_message, refined_type) <- function(type, obj, obj_name) {
-  for (trait in type@parent_type@refinements) {
-    if (!rlang::is_true(trait_test(trait, obj))) {
-      return(trait_absent_message(trait, obj, obj_name))
-    }
-  }
-  for (trait in type@refinements) {
-    if (!rlang::is_true(trait_test(trait, obj))) {
-      return(trait_absent_message(trait, obj, obj_name))
-    }
-  }
-}
-
-method(type_validate, type) <- function(type, obj, obj_name) {
-  if (rlang::is_true(type_test(type, obj))) {
-    NULL
-  } else {
-    type_absent_message(type, obj, obj_name)
-  }
-}
-
-method(type_inline_validate_factory, type) <- function(type) {
-  NULL
-}

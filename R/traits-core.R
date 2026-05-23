@@ -1,8 +1,8 @@
 # compilation helpers ----------------------------------------------------------
 
-requires_test_obj_is_vector <- function(parent_type, refinements) {
+requires_test_obj_is_vector <- function(parent_type, traits) {
   inherits_type(parent_type, t_vector) ||
-    has_trait_class(parent_type, refinements, trait_obj_is_vector)
+    has_trait_class(parent_type, traits, trait_obj_is_vector)
 }
 
 # bare_typed -------------------------------------------------------------------

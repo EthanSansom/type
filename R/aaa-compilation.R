@@ -3,12 +3,12 @@
 type_validate_expr <- function(type, obj_sym, obj_name, env) {
   if (is_named_type(type)) {
     parent_type <- type
-    parent_traits <- type@refinements
+    parent_traits <- type@traits
     refinement_traits <- list()
   } else {
     parent_type <- type@parent_type
-    parent_traits <- parent_type@refinements
-    refinement_traits <- type@refinements
+    parent_traits <- parent_type@traits
+    refinement_traits <- type@traits
   }
 
   type_validate_factory <- type_inline_validate_factory(parent_type)
@@ -53,21 +53,21 @@ lazy_validate <- function(...) {
 
 # requirements -----------------------------------------------------------------
 
-has_trait_class <- function(parent_type, refinements, target_trait_refiner) {
-  all_refinements <- c(parent_type@refinements, refinements)
+has_trait_class <- function(parent_type, traits, target_trait_refiner) {
+  all_traits <- c(parent_type@traits, traits)
   target_class <- trait_class(target_trait_refiner)
-  for (trait in all_refinements) {
+  for (trait in all_traits) {
     if (S7::S7_inherits(trait, target_class)) return(TRUE)
   }
   FALSE
 }
 
-has_trait_classes <- function(parent_type, refinements, target_trait_refiners) {
-  all_refinements <- c(parent_type@refinements, refinements)
+has_trait_classes <- function(parent_type, traits, target_trait_refiners) {
+  all_traits <- c(parent_type@traits, traits)
   target_classes <- map(target_trait_refiners, trait_class)
   for (target_class in target_classes) {
     has_target <- FALSE
-    for (trait in all_refinements) {
+    for (trait in all_traits) {
       if (S7::S7_inherits(trait, target_class)) {
         has_target <- TRUE
         break
@@ -78,9 +78,9 @@ has_trait_classes <- function(parent_type, refinements, target_trait_refiners) {
   TRUE
 }
 
-has_bare_trait <- function(parent_type, refinements, target_trait) {
-  all_refinements <- c(parent_type@refinements, refinements)
-  for (trait in all_refinements) {
+has_bare_trait <- function(parent_type, traits, target_trait) {
+  all_traits <- c(parent_type@traits, traits)
+  for (trait in all_traits) {
     if (!identical(trait, target_trait)) return(FALSE)
   }
   TRUE
@@ -98,17 +98,17 @@ new_inline_rule <- function(
 ) {
   list(
     validate_factory = validate_factory %||% default_trait_validate_factory(),
-    requires = requires %||% function(parent_type, refinements) TRUE
+    requires = requires %||% function(parent_type, traits) TRUE
   )
 }
 
-resolve_inline_rules <- function(rules, parent_type, refinements) {
-  can_inline <- function(rule, parent_type, refinements) {
-    rule$requires(parent_type, refinements)
+resolve_inline_rules <- function(rules, parent_type, traits) {
+  can_inline <- function(rule, parent_type, traits) {
+    rule$requires(parent_type, traits)
   }
 
   for (rule in rules) {
-    if (can_inline(rule, parent_type, refinements)) {
+    if (can_inline(rule, parent_type, traits)) {
       return(rule$validate_factory)
     }
   }
@@ -166,7 +166,7 @@ inline_validate <- function(
   rlang::new_function(
     args = args,
     body = if (rlang::is_missing(body_expr)) {
-      rlang::expr(if (!!test_expr) NULL else !!message_expr)
+      rlang::expr(rlang::expr(if (!!test_expr) NULL else !!message_expr))
     } else {
       body_expr
     },

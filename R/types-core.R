@@ -10,7 +10,7 @@ on_load_core_types <- function() {
   t_vector <<- new_named_type(
     "union_vector",
     parent_type = t_any,
-    refinements = list(
+    traits = list(
       trait_obj_is_vector()
     )
   )
@@ -18,7 +18,7 @@ on_load_core_types <- function() {
   t_atomic <<- new_named_type(
     "union_atomic",
     parent_type = t_vector,
-    refinements = list(
+    traits = list(
       trait_obj_is_atomic()
     )
   )
@@ -26,7 +26,7 @@ on_load_core_types <- function() {
   t_integer <<- t_int <<- new_named_type(
     "bare_integer",
     parent_type = t_atomic,
-    refinements = list(
+    traits = list(
       bare_typed(typeof = "integer")
     )
   )
@@ -34,7 +34,7 @@ on_load_core_types <- function() {
   t_logical <<- t_lgl <<- new_named_type(
     "bare_logical",
     parent_type = t_atomic,
-    refinements = list(
+    traits = list(
       bare_typed(typeof = "logical")
     )
   )
@@ -42,11 +42,11 @@ on_load_core_types <- function() {
   t_bool <<- new_named_type(
     "bare_bool",
     parent_type = t_logical,
-    refinements = list(
+    traits = list(
       sized(size = 1L),
       complete()
     ),
-    inherit_refinements = TRUE
+    inherit_traits = TRUE
   )
 
   method(type_absent_message, type_class(t_bool)) <- function(

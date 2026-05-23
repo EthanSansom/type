@@ -68,6 +68,10 @@ abort_bad_vec_type <- function(
   )
 }
 
+# TODO: We'll need to add an `exported_` or `inlined_` prefix to this and other
+# functions that aren't meant to be used but *are* inserted into generated
+# functions.
+#' @export
 abort_mistyped <- function(
   message,
   error_call = rlang::caller_env(),
