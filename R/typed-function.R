@@ -91,6 +91,10 @@ typed <- function(..., fun = NULL, returns = NULL) {
   out
 }
 
+# TODO:
+# Typed Lambda
+`%:>%` <- function(fun, type) {}
+
 # typed function helpers -------------------------------------------------------
 
 parse_typed_dots <- function(..., .error_call = rlang::caller_env()) {

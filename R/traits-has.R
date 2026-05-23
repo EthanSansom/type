@@ -5,10 +5,10 @@ has <- function(.type = t_any, on, on_type) {}
 
 # has_on_custom ----------------------------------------------------------------
 
-has_on_custom <- new_trait("has", parameters = rlang::pairlist2(on = , on_type = , ))
-
-
-# TODO:
+has_on_custom <- new_trait(
+  "has", 
+  parameters = rlang::pairlist2(on = , on_type = , )
+)
 
 method(trait_test, trait_class(has)) <- function(trait, obj) {
   obj_is_type(trait@on@accessor(obj), trait@on_type)
@@ -20,18 +20,6 @@ method(trait_absent_message, trait_class(has)) <- function(
   obj_name
 ) {
   type_absent_message(
-    type = trait@on_type,
-    obj = trait@on@accessor(obj),
-    obj_name = trait@on@name_fun(obj, obj_name)
-  )
-}
-
-method(trait_absent_string, trait_class(has)) <- function(
-  trait,
-  obj,
-  obj_name
-) {
-  type_absent_string(
     type = trait@on_type,
     obj = trait@on@accessor(obj),
     obj_name = trait@on@name_fun(obj, obj_name)

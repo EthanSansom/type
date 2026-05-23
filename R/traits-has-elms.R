@@ -7,7 +7,12 @@ has_names <- function(.type = t_any, names, match = "all") {
   assert_is_chr(names, complete = TRUE)
   match <- normalize_relation(match)
 
-  trait_has_elms(.type = .type, elms = names, which_elm = "name", match = match)
+  trait_has_elms(
+    .type = .type, 
+    elms = names, 
+    which_elm = "name", 
+    match = match
+  )
 }
 
 has_attrs <- function(.type = t_any, attrs, match = "all") {
@@ -15,7 +20,12 @@ has_attrs <- function(.type = t_any, attrs, match = "all") {
   assert_is_chr(attrs, complete = TRUE)
   match <- normalize_relation(match)
 
-  trait_has_elms(.type = .type, elms = attrs, which_elm = "attr", match = match)
+  trait_has_elms(
+    .type = .type, 
+    elms = attrs, 
+    which_elm = "attr", 
+    match = match
+  )
 }
 
 has_cols <- function(.type = t_any, cols, match = "all") {
@@ -24,12 +34,17 @@ has_cols <- function(.type = t_any, cols, match = "all") {
   match <- normalize_relation(match)
 
   trait_has_elms(
-    .type = classed(.type, "data.frame"), # Enforce "data.frame" inheritance
+    # TODO: Document that `has_cols()` verifies data.frame *class*
+    # trait_has_elms() doesn't used `required`, as it's requirements depend on
+    # the value of `which_elm`. 
+    .type = .type |> classed("data.frame"),
     elms = cols,
     which_elm = "col",
     match = match
   )
 }
+
+# implementation ---------------------------------------------------------------
 
 trait_has_elms <- new_trait(
   "trait_has_elms",
