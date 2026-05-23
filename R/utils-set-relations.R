@@ -174,7 +174,7 @@ bad_is_superset_of_message <- function(
       i = format_styled(
         "{.arg {obj_name}} must contain {qty(n_vec)}element{?s}: <<fmt_vec_string(vec)>>."
       ),
-      x = format_missing_vec(obj_name, bad_vec)
+      x = bullet_missing_vec(obj_name, bad_vec)
     ))
   }
 
@@ -184,7 +184,7 @@ bad_is_superset_of_message <- function(
       "{.arg {obj_name}} must have {qty(n_vec)}{?the/every} <<fmt$have>> in: ",
       "<<fmt_asis_collapse(fmt$fmt(vec))>>."
     ),
-    x = format_missing_elms(obj_name, bad_vec, which_elm)
+    x = bullet_missing_elms(obj_name, bad_vec, which_elm)
   )
 }
 
@@ -207,7 +207,7 @@ bad_intersects_with_message <- function(obj_name, obj, vec, which_elm = NULL) {
       i = format_styled(
         "{.arg {obj_name}} must contain at least one of: <<fmt_vec_string(vec)>>."
       ),
-      x = format_matching_vec(obj_name, NULL)
+      x = bullet_matching_vec(obj_name, NULL)
     ))
   }
 
@@ -217,7 +217,7 @@ bad_intersects_with_message <- function(obj_name, obj, vec, which_elm = NULL) {
       "{.arg {obj_name}} must have at least one <<fmt$have>> from: ",
       "<<fmt_asis_collapse(fmt$fmt(vec))>>."
     ),
-    x = format_matching_elms(obj_name, NULL, which_elm)
+    x = bullet_matching_elms(obj_name, NULL, which_elm)
   )
 }
 
@@ -250,7 +250,7 @@ bad_contains_n_of_message <- function(
       i = format_styled(
         "{.arg {obj_name}} must contain exactly {n} of: <<fmt_vec_string(vec)>>."
       ),
-      x = format_matching_vec(obj_name, bad_vec)
+      x = bullet_matching_vec(obj_name, bad_vec)
     ))
   }
 
@@ -260,7 +260,7 @@ bad_contains_n_of_message <- function(
       "{.arg {obj_name}} must have exactly {n} <<fmt$have>>{?s} from: ",
       "<<fmt_asis_collapse(fmt$fmt(vec))>>."
     ),
-    x = format_matching_elms(obj_name, bad_vec, which_elm)
+    x = bullet_matching_elms(obj_name, bad_vec, which_elm)
   )
 }
 
@@ -291,7 +291,7 @@ bad_subset_of_message <- function(
       i = format_styled(
         "{.arg {obj_name}} may only contain values from: <<fmt_vec_string(vec)>>."
       ),
-      x = format_unexpected_vec(obj_name, bad_vec)
+      x = bullet_unexpected_vec(obj_name, bad_vec)
     ))
   }
 
@@ -301,7 +301,7 @@ bad_subset_of_message <- function(
       "{.arg {obj_name}} may only have <<fmt$have>>s from: ",
       "<<fmt_asis_collapse(fmt$fmt(vec))>>."
     ),
-    x = format_unexpected_elms(obj_name, bad_vec, which_elm)
+    x = bullet_unexpected_elms(obj_name, bad_vec, which_elm)
   )
 }
 
@@ -332,7 +332,7 @@ bad_none_of_message <- function(
       i = format_styled(
         "{.arg {obj_name}} must not contain any of: <<fmt_vec_string(vec)>>."
       ),
-      x = format_unexpected_vec(obj_name, bad_vec)
+      x = bullet_unexpected_vec(obj_name, bad_vec)
     ))
   }
 
@@ -342,7 +342,7 @@ bad_none_of_message <- function(
       "{.arg {obj_name}} must not have any <<fmt$have>>s from: ",
       "<<fmt_asis_collapse(fmt$fmt(vec))>>."
     ),
-    x = format_unexpected_elms(obj_name, bad_vec, which_elm)
+    x = bullet_unexpected_elms(obj_name, bad_vec, which_elm)
   )
 }
 
@@ -379,8 +379,8 @@ bad_is_setequal_to_message <- function(
       i = format_styled(
         "{.arg {obj_name}} must contain exactly: <<fmt_vec_string(vec)>>."
       ),
-      x = if (n_missing > 0) format_missing_vec(obj_name, missing_vec),
-      x = if (n_extra > 0) format_unexpected_vec(obj_name, extra_vec)
+      x = if (n_missing > 0) bullet_missing_vec(obj_name, missing_vec),
+      x = if (n_extra > 0) bullet_unexpected_vec(obj_name, extra_vec)
     ))
   }
 
@@ -391,9 +391,9 @@ bad_is_setequal_to_message <- function(
       "<<fmt_asis_collapse(fmt$fmt(vec))>>."
     ),
     x = if (n_missing > 0) {
-      format_missing_elms(obj_name, missing_vec, which_elm)
+      bullet_missing_elms(obj_name, missing_vec, which_elm)
     },
-    x = if (n_extra > 0) format_unexpected_elms(obj_name, extra_vec, which_elm)
+    x = if (n_extra > 0) bullet_unexpected_elms(obj_name, extra_vec, which_elm)
   )
 }
 
@@ -403,7 +403,7 @@ validate_is_same_as <- function(obj, vec, obj_name, which_elm = NULL) {
 
   if (obj_size != vec_size) {
     return(c(
-      x = format_unexpected_size(obj_name, obj_size, vec_size, which_elm)
+      x = bullet_unexpected_size(obj_name, obj_size, vec_size, which_elm)
     ))
   }
 
@@ -503,24 +503,24 @@ bad_is_permutation_of_message <- function(
   if (obj_size != vec_size) {
     return(c(
       i = header,
-      x = format_unexpected_size(obj_name, obj_size, vec_size, which_elm)
+      x = bullet_unexpected_size(obj_name, obj_size, vec_size, which_elm)
     ))
   }
 
   if (is.null(which_elm)) {
     c(
       i = header,
-      x = if (any(!in_obj)) format_missing_vec(obj_name, vec[!in_obj]),
-      x = if (any(!in_vec)) format_unexpected_vec(obj_name, obj[!in_vec])
+      x = if (any(!in_obj)) bullet_missing_vec(obj_name, vec[!in_obj]),
+      x = if (any(!in_vec)) bullet_unexpected_vec(obj_name, obj[!in_vec])
     )
   } else {
     c(
       i = header,
       x = if (any(!in_obj)) {
-        format_missing_elms(obj_name, vec[!in_obj], which_elm)
+        bullet_missing_elms(obj_name, vec[!in_obj], which_elm)
       },
       x = if (any(!in_vec)) {
-        format_unexpected_elms(obj_name, obj[!in_vec], which_elm)
+        bullet_unexpected_elms(obj_name, obj[!in_vec], which_elm)
       }
     )
   }
@@ -537,14 +537,14 @@ elms_format <- function(which_elm) {
   )
 }
 
-format_unexpected_vec <- function(obj_name, unexpected) {
+bullet_unexpected_vec <- function(obj_name, unexpected) {
   n <- vctrs::vec_size(unexpected)
   format_styled(
     "{.arg {obj_name}} contains {n} unexpected element{?s}: <<fmt_vec_string(unexpected)>>."
   )
 }
 
-format_unexpected_elms <- function(obj_name, unexpected, which_elm) {
+bullet_unexpected_elms <- function(obj_name, unexpected, which_elm) {
   fmt <- elms_format(which_elm)
   n <- vctrs::vec_size(unexpected)
   format_styled(
@@ -553,14 +553,14 @@ format_unexpected_elms <- function(obj_name, unexpected, which_elm) {
   )
 }
 
-format_missing_vec <- function(obj_name, missing) {
+bullet_missing_vec <- function(obj_name, missing) {
   n <- vctrs::vec_size(missing)
   format_styled(
     "{.arg {obj_name}} is missing {n} element{?s}: <<fmt_vec_string(missing)>>."
   )
 }
 
-format_missing_elms <- function(obj_name, missing, which_elm) {
+bullet_missing_elms <- function(obj_name, missing, which_elm) {
   fmt <- elms_format(which_elm)
   n <- vctrs::vec_size(missing)
   format_styled(
@@ -569,7 +569,7 @@ format_missing_elms <- function(obj_name, missing, which_elm) {
   )
 }
 
-format_matching_vec <- function(obj_name, matching) {
+bullet_matching_vec <- function(obj_name, matching) {
   n <- vctrs::vec_size(matching)
   if (n == 0L) {
     return(format_styled("{.arg {obj_name}} contains no matching values."))
@@ -579,7 +579,7 @@ format_matching_vec <- function(obj_name, matching) {
   )
 }
 
-format_matching_elms <- function(obj_name, matching, which_elm) {
+bullet_matching_elms <- function(obj_name, matching, which_elm) {
   fmt <- elms_format(which_elm)
   n <- vctrs::vec_size(matching)
   if (n == 0L) {
@@ -593,13 +593,13 @@ format_matching_elms <- function(obj_name, matching, which_elm) {
   )
 }
 
-format_bad_n_vec <- function(obj_name, n_actual, n_expected) {
+bullet_bad_n_vec <- function(obj_name, n_actual, n_expected) {
   format_styled(
     "{.arg {obj_name}} has {n_actual} element{?s}, but expected {n_expected}."
   )
 }
 
-format_bad_n_elms <- function(obj_name, n_actual, n_expected, which_elm) {
+bullet_bad_n_elms <- function(obj_name, n_actual, n_expected, which_elm) {
   fmt <- elms_format(which_elm)
   format_styled(
     "{.arg {obj_name}} has {n_actual} <<fmt$label>>{?s}, ",
@@ -607,15 +607,15 @@ format_bad_n_elms <- function(obj_name, n_actual, n_expected, which_elm) {
   )
 }
 
-format_unexpected_size <- function(
+bullet_unexpected_size <- function(
   obj_name,
   obj_size,
   vec_size,
   which_elm = NULL
 ) {
   if (is.null(which_elm)) {
-    return(format_bad_n_vec(obj_name, obj_size, vec_size))
+    return(bullet_bad_n_vec(obj_name, obj_size, vec_size))
   }
   fmt <- elms_format(which_elm)
-  format_bad_n_elms(obj_name, obj_size, vec_size, which_elm)
+  bullet_bad_n_elms(obj_name, obj_size, vec_size, which_elm)
 }
