@@ -85,7 +85,7 @@ new_trait <- function(
   out <- rlang::new_function(
     # TODO: Does it matter where we evaluate this, maybe do so first?
     args = rlang::pairlist2(
-      .type = type::t_any,
+      .type = t_any,
       !!!parameters,
       # Trait refiner functions look like `function(.type, <params>, ...)`
       # so that we can explicitly handle errors caused by providing too many
@@ -103,17 +103,17 @@ new_trait <- function(
     }),
     env = parent_env
   )
-  class(out) <- "type_trait_refiner"
+  class(out) <- c("type_refiner", "function")
   attr(out, "trait_class") <- trait_class
   out
 }
 
-trait_class <- function(x) {
-  attr(x, "trait_class")
+is_trait_refiner <- function(x) {
+  inherits(x, "type_refiner")
 }
 
-is_trait_refiner <- function(x) {
-  inherits(x, "type_trait_refiner")
+trait_class <- function(x) {
+  attr(x, "trait_class")
 }
 
 is_bare_trait <- function(x) {
@@ -176,16 +176,6 @@ new_refined_type <- function(
 }
 
 # generics ---------------------------------------------------------------------
-
-## obj -------------------------------------------------------------------------
-
-obj_as_type <- S7::new_generic(
-  "obj_as_type",
-  c("obj"),
-  function(obj, type, ...) {
-    S7::S7_dispatch()
-  }
-)
 
 ## trait -----------------------------------------------------------------------
 

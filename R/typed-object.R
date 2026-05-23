@@ -119,13 +119,6 @@
   return(invisible(value))
 }
 
-# TODO: Auto Typed Assignment
-`%:<-%` <- function(name, value) {}
-
-# TODO: Belongs in typed-function.R
-# Typed Lambda
-`%:>%` <- function(fun, type) {}
-
 # helpers ----------------------------------------------------------------------
 
 parse_declaration <- function(
