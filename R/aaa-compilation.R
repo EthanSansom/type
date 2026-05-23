@@ -40,8 +40,7 @@ type_validate_expr <- function(type, obj_sym, obj_name, env) {
     return(validate_exprs[[1L]])
   }
 
-  # TODO: Namespace everywhere! E.g. `.ns = "type"`
-  rlang::call2("lazy_validate", !!!validate_exprs)
+  rlang::call2("lazy_validate", !!!validate_exprs, .ns = "type")
 }
 
 # predicate and message evaluation ---------------------------------------------
@@ -177,7 +176,6 @@ inline_validate <- function(
 
 default_trait_validate_factory <- function() {
   function(trait, obj_sym, obj_name, env) {
-    # TODO: Namespace `type::trait_validate`
-    rlang::expr(trait_validate(!!trait, !!obj_sym, !!obj_name))
+    rlang::call2("trait_validate", trait, obj_sym, obj_name, .ns = "type")
   }
 }

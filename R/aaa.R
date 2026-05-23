@@ -85,7 +85,7 @@ new_trait <- function(
   out <- rlang::new_function(
     # TODO: Does it matter where we evaluate this, maybe do so first?
     args = rlang::pairlist2(
-      .type = t_any, # TODO: Everything should be namespaced!!
+      .type = type::t_any,
       !!!parameters,
       # Trait refiner functions look like `function(.type, <params>, ...)`
       # so that we can explicitly handle errors caused by providing too many

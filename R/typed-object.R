@@ -50,7 +50,8 @@
             if (missing(x)) {
               return(VALUE)
             }
-            abort_mistyped(
+            # TODO: abort_mistyped will need to be exported
+            type::abort_mistyped(
               format_styled("Can't assign to the constant {.arg {NAME}}."),
               error_call = !!parent_frame
             )
@@ -88,7 +89,8 @@
               VALUE <<- x
               return(VALUE)
             }
-            abort_mistyped(
+            # TODO: abort_mistyped will need to be exported
+            type::abort_mistyped(
               c(
                 format_styled(
                   "Attempted to assign a mistyped value to {.arg {NAME}}."

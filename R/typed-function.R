@@ -61,7 +61,7 @@ typed <- function(..., fun = NULL, returns = NULL) {
       arg_sym = args_syms
     ),
     \(arg_type, arg_name, arg_sym) {
-      if (is_type_any(arg_type)) {
+      if (is_type_any(arg_type)) { # TODO: `is_type_any` will need to be exported
         return(NULL)
       }
       arg_assertion_expr(arg_type, arg_name, arg_sym, error_call = parent_frame)
@@ -271,8 +271,9 @@ arg_assertion_expr <- function(arg_type, arg_name, arg_sym, error_call) {
   assertion_expr <- rlang::call2(
     "inline_abort_if_mistyped_arg",
     arg_name = arg_name,
-    arg_validation_result = validate_expr
-  ) # TODO: `.ns = "type"`
+    arg_validation_result = validate_expr,
+    .ns = "type"
+  )
 
   is_optional <- "optional" %in% arg_mods
   is_maybe <- "maybe" %in% arg_mods
