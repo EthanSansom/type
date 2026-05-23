@@ -32,7 +32,7 @@ context_local <- function(name, value, frame = rlang::caller_env()) {
     add = TRUE,
     after = TRUE
   ))
-  eval_bare(expr, frame)
+  rlang::eval_bare(expr, frame)
 
   value
 }

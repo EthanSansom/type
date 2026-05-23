@@ -60,7 +60,7 @@ on_load_core_types <- function() {
       )
       return(c(x = message))
     }
-    if (is_bare_logical(obj)) {
+    if (rlang::is_bare_logical(obj)) {
       what <- if (rlang::is_empty(obj)) {
         "an empty {.cls logical} vector"
       } else {

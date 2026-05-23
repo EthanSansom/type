@@ -47,7 +47,7 @@ type_validate_expr <- function(type, obj_sym, obj_name, env) {
 # predicate and message evaluation ---------------------------------------------
 
 lazy_validate <- function(...) {
-  for (i in seq2(1, ...length())) {
+  for (i in rlang::seq2(1, ...length())) {
     if (!is.null(...elt(i))) return(...elt(i))
   }
 }

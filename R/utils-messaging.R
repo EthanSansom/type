@@ -281,7 +281,7 @@ fmt_vec <- function(vec) {
 }
 
 fmt_at_locs <- function(where, place = c("location", "row")) {
-  place <- arg_match0(place, c("location", "row"))
+  place <- rlang::arg_match0(place, c("location", "row"))
   places <- paste0(place, "s")
   if (is.logical(where)) {
     where <- which(where)

@@ -22,7 +22,7 @@
 
   validation_result <- type_validate(type, value, "<value>")
   if (!is.null(validation_result)) {
-    value <- as_label(decl_expr[[2]])
+    value <- rlang::as_label(decl_expr[[2]])
     abort_mistyped(
       message = c(
         format_styled(
@@ -110,7 +110,7 @@
   binding_fun <- rlang::zap_srcref(binding_fun)
 
   if (rlang::env_has(parent_frame, name)) {
-    env_unbind(parent_frame, name)
+    rlang::env_unbind(parent_frame, name)
   }
   makeActiveBinding(name, binding_fun, parent_frame)
 
@@ -136,7 +136,7 @@ parse_declaration <- function(
     value <- rlang::try_fetch(
       eval(decl_expr[[2]], parent_frame),
       error = function(e) {
-        init <- as_label(decl_expr[[2]])
+        init <- rlang::as_label(decl_expr[[2]])
         type_abort_bad_input(
           message = format_styled(
             "Can't evaluate the initial value {.code {init}} of {.arg {name}}."
@@ -149,7 +149,7 @@ parse_declaration <- function(
     return(list(name = name, value = value))
   }
 
-  expr_label <- as_label(decl_expr)
+  expr_label <- rlang::as_label(decl_expr)
   if (rlang::is_symbol(decl_expr)) {
     type_abort_bad_input(
       message = c(
@@ -227,7 +227,7 @@ warn_if_non_const_mods <- function(mods, obj_name) {
 
   non_const_mods <- backtick(paste0(non_const_mods, "()"))
   n <- length(non_const_mods)
-  warn(
+  rlang::warn(
     message = c(
       format_styled(
         "{qty(n)}Removing the <<oxford(non_const_mods)>> modifier{?s} ",

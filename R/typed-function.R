@@ -28,7 +28,7 @@ typed <- function(..., fun = NULL, returns = NULL) {
     ))
   } else if (supplied_fun) {
     if (!rlang::is_call(fun_expr, "function")) {
-      fun_label <- as_label(fun_expr)
+      fun_label <- rlang::as_label(fun_expr)
       if (rlang::is_symbol(fun_expr)) {
         bad <- "the symbol {.code {fun_label}}"
       } else if (fun_label == "{...}") {
@@ -94,7 +94,7 @@ typed <- function(..., fun = NULL, returns = NULL) {
 # typed function helpers -------------------------------------------------------
 
 parse_typed_dots <- function(..., .error_call = rlang::caller_env()) {
-  dots_exprs <- enexprs(...)
+  dots_exprs <- rlang::enexprs(...)
   fun_exprs <- keep(dots_exprs, is_call, name = "function")
   has_fun <- length(fun_exprs) == 1L
 
@@ -110,7 +110,7 @@ parse_typed_dots <- function(..., .error_call = rlang::caller_env()) {
     )
   }
   if (length(dots_exprs) == 1L && !has_fun) {
-    expr_label <- as_label(dots_exprs[[1]])
+    expr_label <- rlang::as_label(dots_exprs[[1]])
     if (rlang::is_symbol(expr_label)) {
       bad <- "the symbol {.code {expr_label}}"
     } else if (expr_label == "{...}") {
@@ -154,7 +154,7 @@ parse_typed_fun_args <- function(
   types <- map(args_parsed, `[[`, "type")
 
   if ("..." %in% names(defaults) && !rlang::is_missing(defaults[["..."]])) {
-    default_label <- as_label(defaults[["..."]])
+    default_label <- rlang::as_label(defaults[["..."]])
     message <- format_styled("Argument {.arg ...} can't have a default value.")
     if (default_label != "{...}") {
       message <- c(
@@ -181,7 +181,7 @@ parse_typed_arg_expr <- function(
 ) {
   # E.g. foo(x)
   if (rlang::is_missing(arg_expr)) {
-    return(list(type = t_any, default = missing_arg()))
+    return(list(type = t_any, default = rlang::missing_arg()))
   }
 
   # E.g. foo(x = t_int %:% 10L)
@@ -224,11 +224,11 @@ parse_typed_arg_expr <- function(
   # `typed(function(x = t_int |> sized("A")) {})`
   arg <- rlang::try_fetch(
     eval(arg_expr, parent_frame),
-    type_error_malformed_type = function(e) cnd_signal(e),
+    type_error_malformed_type = function(e) rlang::cnd_signal(e),
     error = function(e) NULL
   )
   if (is_type(arg)) {
-    list(type = arg, default = missing_arg())
+    list(type = arg, default = rlang::missing_arg())
   } else {
     list(type = t_any, default = arg_expr)
   }
@@ -268,7 +268,7 @@ arg_assertion_expr <- function(arg_type, arg_name, arg_sym, error_call) {
     obj_name = arg_name,
     env = rlang::expr(rlang::caller_env())
   )
-  assertion_expr <- call2(
+  assertion_expr <- rlang::call2(
     "inline_abort_if_mistyped_arg",
     arg_name = arg_name,
     arg_validation_result = validate_expr
