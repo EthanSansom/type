@@ -41,47 +41,40 @@ validate_vec_set_relation <- function(
 normalize_relation <- function(
   relation,
   relation_name = caller_arg(relation),
+  subset = NULL,
   error_call = rlang::caller_env()
 ) {
-  switch(
-    relation,
-    all = ,
-    all_of = ,
-    superset_of = "superset_of",
-    any = ,
-    any_of = ,
-    intersects_with = "intersects_with",
-    one_of = "one_of",
-    subset_of = "subset_of",
-    none = ,
-    none_of = ,
-    disjoint_to = "disjoint_to",
-    only = ,
-    setequal_to = "setequal_to",
-    exact = ,
-    same_as = "same_as",
-    perm_of = ,
-    permutation_of = "permutation_of",
-    {
-      valid_relations <- c(
-        '"all" / "all_of" / "superset_of"',
-        '"any" / "any_of" / "intersects_with"',
-        '"one_of"',
-        '"subset_of"',
-        '"none" / "none_of" / "disjoint_to"',
-        '"only" / "setequal_to"',
-        '"exact" / "same_as"',
-        '"perm_of" / "permutation_of"'
-      )
-      type_abort_bad_input(
-        c(
-          format_styled("{.arg {relation_name}} must be one of:"),
-          rlang::set_names(valid_relations, "*"),
-          x = format_styled("{.arg {relation_name}} is {.val {relation}}.")
-        ),
-        error_call = error_call
-      )
-    }
+  all_relations <- list(
+    superset_of     = c("all", "all_of", "superset_of"),
+    intersects_with = c("any", "any_of", "intersects_with"),
+    one_of          = c("one_of"),
+    subset_of       = c("subset_of"),
+    disjoint_to     = c("none", "none_of", "disjoint_to"),
+    setequal_to     = c("only", "setequal_to"),
+    same_as         = c("exact", "same_as"),
+    permutation_of  = c("perm_of", "permutation_of")
+  )
+
+  if (!is.null(subset)) {
+    all_relations <- all_relations[names(all_relations) %in% subset]
+  }
+
+  for (normalized in names(all_relations)) {
+    if (relation %in% all_relations[[normalized]]) return(normalized)
+  }
+
+  valid_relations <- map_chr(
+    all_relations, 
+    function(synonyms) fmt_vec_collapse(synoyms, " / ")
+  )
+
+  type_abort_bad_input(
+    c(
+      format_styled("{.arg {relation_name}} must be one of:"),
+      rlang::set_names(valid_relations, "*"),
+      x = format_styled("{.arg {relation_name}} is {.val {relation}}.")
+    ),
+    error_call = error_call
   )
 }
 
