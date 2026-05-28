@@ -1,5 +1,7 @@
 # misc -------------------------------------------------------------------------
 
+# TODO: Remove some of these which aren't needed
+
 commas <- function(x) {
   paste(x, collapse = ", ")
 }
@@ -217,21 +219,25 @@ fmt_vec_collapse <- function(
   vec,
   n_elm_max = 10L,
   n_chr_max = 50L,
-  sep = ", "
+  sep = ", ",
+  last = NULL
 ) {
-  fmt_asis_collapse(fmt_vec(vec))
+  fmt_asis_collapse(
+    fmt_vec(vec), 
+    n_elm_max = n_elm_max, 
+    n_chr_max = n_chr_max, 
+    sep = sep,
+    last = last
+  )
 }
 
-fmt_syms_collapse <- function(
-  chr,
+fmt_asis_collapse <- function(
+  x, 
   n_elm_max = 10L,
-  n_chr_max = 50L,
-  sep = ", "
+  n_chr_max = 50L, 
+  sep = ", ",
+  last = NULL
 ) {
-  fmt_asis_collapse(backtick(chr))
-}
-
-fmt_asis_collapse <- function(x, n_elm_max = 10L, n_chr_max = 50L, sep = ", ") {
   n <- vctrs::vec_size(x)
 
   if (n == 0L) {
@@ -243,7 +249,13 @@ fmt_asis_collapse <- function(x, n_elm_max = 10L, n_chr_max = 50L, sep = ", ") {
 
   # Everything fits
   collapsed <- collapse(x, sep = sep)
-  if (n <= n_elm_max && nchar(collapsed) <= n_chr_max) {
+  if (n <= n_elm_max && nchar(collapsed) + nchar(last %||% "") <= n_chr_max) {
+    if (!is.null(last) && n >= 2L) {
+      head <- x[seq_len(n - 1L)]
+      tail <- x[[n]]
+      last_sep <- if (n == 2L) last else paste0(sep, last)
+      return(paste0(collapse(head, sep = sep), last_sep, tail))
+    }
     return(collapsed)
   }
 
@@ -270,15 +282,8 @@ fmt_asis_collapse <- function(x, n_elm_max = 10L, n_chr_max = 50L, sep = ", ") {
   collapse(c(truncated, "..."), sep = sep)
 }
 
-# TODO: Possibly rounding and custom formatting for other objects
-# - See {ivs} iv_format()
-fmt_vec <- function(vec) {
-  if (is.character(vec)) {
-    chr_encode(vec)
-  } else {
-    format(vec, trim = TRUE)
-  }
-}
+# TODO: Revise how `fmt_at_locs` works. Specifically, choose `n_elms_max`
+# and `n_chr_max` and use `fmt_vec_string()` consistently.
 
 fmt_at_locs <- function(where, place = c("location", "row")) {
   place <- rlang::arg_match0(place, c("location", "row"))
@@ -293,11 +298,11 @@ fmt_at_locs <- function(where, place = c("location", "row")) {
   n <- length(where)
   where <- fmt_vec(where)
   if (n == 1L) {
-    glue::glue("at {place} {backtick(where)}")
+    glue::glue("at {place} {fmt_vec_string(where)}")
   } else if (n <= 5) {
-    glue::glue("at {places} {backtick(c_commas(where))}")
+    glue::glue("at {places} {fmt_vec_string(where)}")
   } else {
-    glue::glue("at {places} {backtick(c_commas(where))} and {n - 5} more")
+    glue::glue("at {places} {fmt_vec_string(where)} and {n - 5} more")
   }
 }
 
@@ -310,9 +315,8 @@ fmt_locs <- function(where) {
   }
 
   n <- length(where)
-  where <- fmt_vec(where)
   if (n == 1L) {
-    backtick(where)
+    fmt_vec_string(where)
   } else if (n <= 5) {
     backtick(c_commas(where))
   } else {
@@ -325,4 +329,14 @@ fmt_locs <- function(where) {
 # - See rlang:::obj_type_friendly, rlang:::obj_type_oo
 fmt_r_type <- function(obj) {
   rlang:::obj_type_friendly(obj)
+}
+
+# TODO: Possibly rounding and custom formatting for other objects
+# - See {ivs} iv_format()
+fmt_vec <- function(vec) {
+  if (is.character(vec)) {
+    chr_encode(vec)
+  } else {
+    format(vec, trim = TRUE)
+  }
 }
