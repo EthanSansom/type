@@ -5,6 +5,7 @@ has <- function(.type = t_any, on, on_type) {}
 
 # has_on_custom ----------------------------------------------------------------
 
+if (FALSE) {
 has_on_custom <- new_trait(
   "has", 
   parameters = rlang::pairlist2(on = , on_type = , )
@@ -24,6 +25,7 @@ method(trait_absent_message, trait_class(has)) <- function(
     obj = trait@on@accessor(obj),
     obj_name = trait@on@name_fun(obj, obj_name)
   )
+}
 }
 
 # on ---------------------------------------------------------------------------

@@ -200,6 +200,29 @@ cli_escape <- function(x) {
   x
 }
 
+cli_bullets_escape <- function(x) {
+  x <- gsub("<", "<<", x, fixed = TRUE)
+  x <- gsub(">", ">>", x, fixed = TRUE)
+  x
+}
+
+cli_bullets_unescape <- function(x) {
+  x <- gsub("<<", "<", x, fixed = TRUE)
+  x <- gsub(">>", ">", x, fixed = TRUE)
+  x
+}
+
+# printing ---------------------------------------------------------------------
+
+cat_bullets <- function(x) {
+  # TODO: `cli::format_bullets_raw` performs substitution (still) on
+  # words wrapped in "<>". I'd like to keep the bullets, think about
+  # what to do here.
+  bullets <- cli_bullets_escape(x)
+  bullets <- cli_bullets_unescape(cli::format_bullets_raw(bullets))
+  cat(bullets, sep = "\n")
+}
+
 # formatters -------------------------------------------------------------------
 
 fmt_vec_string <- function(vec, n_elm_max = 5L, n_chr_max = 50L) {

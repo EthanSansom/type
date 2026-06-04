@@ -1,18 +1,16 @@
 # dispatch ---------------------------------------------------------------------
 
-# We expect `normalize_relation()` to have been called prior to test/validating.
-
 test_vec_set_relation <- function(obj, vec, relation) {
   switch(
     relation,
-    superset_of = test_is_superset_of(obj, vec),
-    intersects_with = test_intersects_with(obj, vec),
-    one_of = test_contains_one_of(obj, vec),
-    subset_of = test_is_subset_of(obj, vec),
-    disjoint_to = test_is_disjoint_to(obj, vec),
-    setequal_to = test_is_setequal_to(obj, vec),
-    same_as = test_is_same_as(obj, vec),
-    permutation_of = test_is_permutation_of(obj, vec),
+    all_of = test_relation_all_of(obj, vec),
+    any_of = test_relation_any_of(obj, vec),
+    one_of = test_relation_one_of(obj, vec),
+    subset_of = test_relation_subset_of(obj, vec),
+    none_of = test_relation_none_of(obj, vec),
+    setequal = test_relation_setequal(obj, vec),
+    same = test_relation_same(obj, vec),
+    perm_of = test_relation_perm_of(obj, vec),
     type_abort_internal(format_styled("Unexpected relation: {relation}."))
   )
 }
@@ -21,131 +19,84 @@ validate_vec_set_relation <- function(
   obj,
   vec,
   relation,
-  obj_name,
+  obj_name = rlang::caller_arg(obj),
   which_elm = NULL
 ) {
   switch(
     relation,
-    superset_of = validate_is_superset_of(obj, vec, obj_name, which_elm),
-    intersects_with = validate_intersects_with(obj, vec, obj_name, which_elm),
-    one_of = validate_contains_one_of(obj, vec, obj_name, which_elm),
-    subset_of = validate_is_subset_of(obj, vec, obj_name, which_elm),
-    disjoint_to = validate_is_disjoint_to(obj, vec, obj_name, which_elm),
-    setequal_to = validate_is_setequal_to(obj, vec, obj_name, which_elm),
-    same_as = validate_is_same_as(obj, vec, obj_name, which_elm),
-    permutation_of = validate_is_permutation_of(obj, vec, obj_name, which_elm),
+    all_of = validate_relation_all_of(obj, vec, obj_name, which_elm),
+    any_of = validate_relation_any_of(obj, vec, obj_name, which_elm),
+    one_of = validate_relation_one_of(obj, vec, obj_name, which_elm),
+    subset_of = validate_relation_subset_of(obj, vec, obj_name, which_elm),
+    none_of = validate_relation_none_of(obj, vec, obj_name, which_elm),
+    setequal = validate_relation_setequal(obj, vec, obj_name, which_elm),
+    same = validate_relation_same(obj, vec, obj_name, which_elm),
+    perm_of = validate_relation_perm_of(obj, vec, obj_name, which_elm),
     type_abort_internal(format_styled("Unexpected relation: {relation}."))
   )
 }
 
-normalize_relation <- function(
-  relation,
-  relation_name = caller_arg(relation),
-  subset = NULL,
-  error_call = rlang::caller_env()
-) {
-  all_relations <- list(
-    superset_of     = c("all", "all_of", "superset_of"),
-    intersects_with = c("any", "any_of", "intersects_with"),
-    one_of          = c("one_of"),
-    subset_of       = c("subset_of"),
-    disjoint_to     = c("none", "none_of", "disjoint_to"),
-    setequal_to     = c("only", "setequal_to"),
-    same_as         = c("exact", "same_as"),
-    permutation_of  = c("perm_of", "permutation_of")
-  )
-
-  if (!is.null(subset)) {
-    all_relations <- all_relations[names(all_relations) %in% subset]
-  }
-
-  for (normalized in names(all_relations)) {
-    if (relation %in% all_relations[[normalized]]) return(normalized)
-  }
-
-  valid_relations <- map_chr(
-    all_relations, 
-    function(synonyms) fmt_vec_collapse(synoyms, " / ")
-  )
-
-  type_abort_bad_input(
-    c(
-      format_styled("{.arg {relation_name}} must be one of:"),
-      rlang::set_names(valid_relations, "*"),
-      x = format_styled("{.arg {relation_name}} is {.val {relation}}.")
-    ),
-    error_call = error_call
-  )
-}
-
-abbr_relation <- function(relation) {
+abbr_vec_set_relation <- function(relation) {
   switch(
     relation,
-    all = ,
-    all_of = ,
-    superset_of = "all",
-    any = ,
-    any_of = ,
-    intersects_with = "any",
+    all_of = "all",
+    any_of = "any",
     one_of = "one_of",
     subset_of = "some",
-    none = ,
-    none_of = ,
-    disjoint_to = "no",
-    only = ,
-    setequal_to = "only",
-    exact = ,
-    same_as = "same",
-    perm_of = ,
-    permutation_of = "perm_of",
+    none_of = "no",
+    setequal = "only",
+    same = "same",
+    perm_of = "perm_of",
     type_abort_internal(format_styled("Unexpected relation: {relation}."))
   )
 }
 
 # test -------------------------------------------------------------------------
 
-test_is_superset_of <- function(obj, vec) {
+test_relation_all_of <- function(obj, vec) {
   all(vctrs::vec_in(vec, obj))
 }
 
-test_intersects_with <- function(obj, vec) {
+test_relation_any_of <- function(obj, vec) {
   any(vctrs::vec_in(vec, obj))
 }
 
-test_contains_one_of <- function(obj, vec) {
+test_relation_one_of <- function(obj, vec) {
   sum(vctrs::vec_in(vec, obj)) == 1L
 }
 
-test_is_subset_of <- function(obj, vec) {
+test_relation_subset_of <- function(obj, vec) {
   all(vctrs::vec_in(obj, vec))
 }
 
-test_is_disjoint_to <- function(obj, vec) {
+test_relation_none_of <- function(obj, vec) {
   !any(vctrs::vec_in(vec, obj))
 }
 
-test_is_setequal_to <- function(obj, vec) {
-  test_is_superset_of(obj, vec) && test_is_subset_of(obj, vec)
+test_relation_setequal <- function(obj, vec) {
+  test_relation_all_of(obj, vec) && test_relation_subset_of(obj, vec)
 }
 
-test_is_same_as <- function(obj, vec) {
+test_relation_same <- function(obj, vec) {
   vctrs::vec_size(obj) == vctrs::vec_size(vec) &&
     all(vctrs::vec_equal(obj, vec, na_equal = TRUE))
 }
 
-test_is_permutation_of <- function(obj, vec) {
-  vctrs::vec_size(obj) == vctrs::vec_size(vec) && test_is_setequal_to(obj, vec)
+test_relation_perm_of <- function(obj, vec) {
+  vctrs::vec_size(obj) == vctrs::vec_size(vec) && test_relation_setequal(obj, vec)
 }
 
 # validation -------------------------------------------------------------------
 
-validate_is_superset_of <- function(obj, vec, obj_name, which_elm = NULL) {
+## all_of ----------------------------------------------------------------------
+
+validate_relation_all_of <- function(obj, vec, obj_name, which_elm = NULL) {
   in_obj <- vctrs::vec_in(vec, obj)
   if (all(in_obj)) {
     return(NULL)
   }
 
-  bad_is_superset_of_message(
+  bad_relation_all_of_message(
     obj = obj,
     obj_name = obj_name,
     vec = vec,
@@ -154,7 +105,7 @@ validate_is_superset_of <- function(obj, vec, obj_name, which_elm = NULL) {
   )
 }
 
-bad_is_superset_of_message <- function(
+bad_relation_all_of_message <- function(
   obj,
   vec,
   bad_vec,
@@ -181,12 +132,14 @@ bad_is_superset_of_message <- function(
   )
 }
 
-validate_intersects_with <- function(obj, vec, obj_name, which_elm = NULL) {
+## any_of ----------------------------------------------------------------------
+
+validate_relation_any_of <- function(obj, vec, obj_name, which_elm = NULL) {
   if (any(vctrs::vec_in(vec, obj))) {
     return(NULL)
   }
 
-  bad_intersects_with_message(
+  bad_relation_any_of_message(
     obj = obj_name,
     obj_name = obj_name,
     vec = vec,
@@ -194,7 +147,7 @@ validate_intersects_with <- function(obj, vec, obj_name, which_elm = NULL) {
   )
 }
 
-bad_intersects_with_message <- function(obj_name, obj, vec, which_elm = NULL) {
+bad_relation_any_of_message <- function(obj_name, obj, vec, which_elm = NULL) {
   if (is.null(which_elm)) {
     return(c(
       i = format_styled(
@@ -214,7 +167,9 @@ bad_intersects_with_message <- function(obj_name, obj, vec, which_elm = NULL) {
   )
 }
 
-validate_contains_one_of <- function(obj, vec, obj_name, which_elm = NULL) {
+## one_of ----------------------------------------------------------------------
+
+validate_relation_one_of <- function(obj, vec, obj_name, which_elm = NULL) {
   in_obj <- vctrs::vec_in(vec, obj)
   if (sum(in_obj) == 1L) {
     return(NULL)
@@ -257,13 +212,15 @@ bad_contains_n_of_message <- function(
   )
 }
 
-validate_is_subset_of <- function(obj, vec, obj_name, which_elm = NULL) {
+## subset_of -------------------------------------------------------------------
+
+validate_relation_subset_of <- function(obj, vec, obj_name, which_elm = NULL) {
   in_vec <- vctrs::vec_in(obj, vec)
   if (all(in_vec)) {
     return(NULL)
   }
 
-  bad_subset_of_message(
+  bad_relation_subset_of_message(
     obj = obj,
     obj_name = obj_name,
     vec = vec,
@@ -272,7 +229,7 @@ validate_is_subset_of <- function(obj, vec, obj_name, which_elm = NULL) {
   )
 }
 
-bad_subset_of_message <- function(
+bad_relation_subset_of_message <- function(
   obj,
   vec,
   bad_vec,
@@ -298,13 +255,15 @@ bad_subset_of_message <- function(
   )
 }
 
-validate_is_disjoint_to <- function(obj, vec, obj_name, which_elm = NULL) {
+## none_of ---------------------------------------------------------------------
+
+validate_relation_none_of <- function(obj, vec, obj_name, which_elm = NULL) {
   in_obj <- vctrs::vec_in(vec, obj)
   if (!any(in_obj)) {
     return(NULL)
   }
 
-  bad_none_of_message(
+  bad_relation_none_of_message(
     obj = obj,
     obj_name = obj_name,
     vec = vec,
@@ -313,7 +272,7 @@ validate_is_disjoint_to <- function(obj, vec, obj_name, which_elm = NULL) {
   )
 }
 
-bad_none_of_message <- function(
+bad_relation_none_of_message <- function(
   obj,
   vec,
   bad_vec,
@@ -339,14 +298,16 @@ bad_none_of_message <- function(
   )
 }
 
-validate_is_setequal_to <- function(obj, vec, obj_name, which_elm = NULL) {
+## setequal --------------------------------------------------------------------
+
+validate_relation_setequal <- function(obj, vec, obj_name, which_elm = NULL) {
   in_obj <- vctrs::vec_in(vec, obj)
   in_vec <- vctrs::vec_in(obj, vec)
   if (all(in_obj) && all(in_vec)) {
     return(NULL)
   }
 
-  bad_is_setequal_to_message(
+  bad_relation_setequal_message(
     obj = obj,
     obj_name = obj_name,
     vec = vec,
@@ -356,7 +317,7 @@ validate_is_setequal_to <- function(obj, vec, obj_name, which_elm = NULL) {
   )
 }
 
-bad_is_setequal_to_message <- function(
+bad_relation_setequal_message <- function(
   obj,
   vec,
   missing_vec,
@@ -390,7 +351,9 @@ bad_is_setequal_to_message <- function(
   )
 }
 
-validate_is_same_as <- function(obj, vec, obj_name, which_elm = NULL) {
+## same ------------------------------------------------------------------------
+
+validate_relation_same <- function(obj, vec, obj_name, which_elm = NULL) {
   obj_size <- vctrs::vec_size(obj)
   vec_size <- vctrs::vec_size(vec)
 
@@ -405,7 +368,7 @@ validate_is_same_as <- function(obj, vec, obj_name, which_elm = NULL) {
     return(NULL)
   }
 
-  bad_is_same_as_message(
+  bad_relation_same_message(
     obj = obj,
     obj_name = obj_name,
     vec = vec,
@@ -414,7 +377,7 @@ validate_is_same_as <- function(obj, vec, obj_name, which_elm = NULL) {
   )
 }
 
-bad_is_same_as_message <- function(
+bad_relation_same_message <- function(
   obj,
   vec,
   is_same,
@@ -450,7 +413,9 @@ bad_is_same_as_message <- function(
   )
 }
 
-validate_is_permutation_of <- function(obj, vec, obj_name, which_elm = NULL) {
+## perm_of ---------------------------------------------------------------------
+
+validate_relation_perm_of <- function(obj, vec, obj_name, which_elm = NULL) {
   obj_size <- vctrs::vec_size(obj)
   vec_size <- vctrs::vec_size(vec)
   in_obj <- vctrs::vec_in(vec, obj)
@@ -459,7 +424,7 @@ validate_is_permutation_of <- function(obj, vec, obj_name, which_elm = NULL) {
     return(NULL)
   }
 
-  bad_is_permutation_of_message(
+  bad_relation_perm_of_message(
     obj = obj,
     obj_name = obj_name,
     vec = vec,
@@ -471,7 +436,7 @@ validate_is_permutation_of <- function(obj, vec, obj_name, which_elm = NULL) {
   )
 }
 
-bad_is_permutation_of_message <- function(
+bad_relation_perm_of_message <- function(
   obj,
   vec,
   vec_size,

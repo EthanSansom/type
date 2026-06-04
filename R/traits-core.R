@@ -1,30 +1,77 @@
-# compilation helpers ----------------------------------------------------------
+# definitions ------------------------------------------------------------------
 
-requires_test_obj_is_vector <- function(parent_type, traits) {
-  inherits_type(parent_type, t_vector) ||
-    has_trait_class(parent_type, traits, trait_obj_is_vector)
+bare_typed <- NULL
+
+# TODO: We'll define the traits properly once a `new_trait()` function is available 
+# rlang::on_load(
+#   bare_type <- new_trait(
+#     "bare_typed",
+#     params = list(
+#       # TODO: Finish the `within()` statement (also define a `within()` trait!)
+#       typeof = t_string |> within(c("logical", "character"))
+#     )
+#   )
+# )
+
+bare_typed_trait <- new_trait_class("bare_typed", params = "typeof")
+
+classed <- NULL
+
+classed_trait <- new_trait_class("classed", params = c("classes", "inherits"))
+
+sized <- NULL
+
+sized_trait <- new_trait_class("sized", params = "size")
+
+complete <- NULL
+
+complete_trait <- new_trait_class("complete", params = character())
+
+unduplicated <- NULL
+
+unduplicated_trait <- new_trait_class("unduplicated", params = character())
+
+# Internal
+is_vector_trait <- new_trait_class("is_vector", params = character())
+is_atomic_trait <- new_trait_class("is_atomic", params = character())
+
+# trait_name -------------------------------------------------------------------
+
+method(trait_name, bare_typed_trait) <- function(trait) {
+  paste0('typeof("', trait@typeof, '")')
 }
 
-# bare_typed -------------------------------------------------------------------
+method(trait_name, classed_trait) <- function(trait) {
+  classes <- trait@classes
+  inherits <- trait@inherits
 
-# Methods:
-# - trait_name:            Formatting name, used like "<trait<{trait_name}>>".
-# - trait_validate:        Returns `NULL` if trait satisfied, otherwise a message, like S7 validator().
-# - trait_test:            Test whether an object has this trait.
-# - trait_absent_message:  Used for long error messages when an object doesn't have this trait.
-# - trait_absent_string:   Used for short error messages when an object doesn't have this trait.
-# - trait_present_string:  Describe an object with this trait, as a string.
-# - trait_invalid_message: Called on trait generation, to check inputs.
-# - trait_inline_rules:    Compiler rules for the trait.
-
-bare_typed <- new_trait("bare_typed", parameters = rlang::pairlist2(typeof = , ))
-
-method(trait_name, trait_class(bare_typed)) <- function(trait) {
-  paste0('typeof("', trait@typeof, '")') # typeof("integer")
+  switch(
+    trait@inherits,
+    all_of = ,
+    any_of = ,
+    # inherits_any_of(factor, character)
+    subset_of = glue::glue("inherits_{abbr_vec_set_relation(inherits)}_({fmt_asis_collapse(classes)})"),
+    # classed(tbl_df/tbl/data.frame)
+    same = paste0("classed(", fmt_asis_collapse(classes, sep = "/") , ")")
+  )
 }
 
-method(trait_test, trait_class(bare_typed)) <- function(trait, obj) {
-  !is.object(obj) &&
+method(trait_name, sized_trait) <- function(trait) {
+  paste0("sized(", trait@size, ")")
+}
+
+method(trait_name, complete_trait) <- function(trait) {
+  "complete()"
+}
+
+method(trait_name, unduplicated_trait) <- function(trait) {
+  "unduplicated()"
+}
+
+# trait_test -------------------------------------------------------------------
+
+method(trait_test, bare_typed_trait) <- function(trait, obj) {
+    !is.object(obj) &&
     switch(
       trait@typeof,
       double = is.double(obj),
@@ -55,12 +102,43 @@ method(trait_test, trait_class(bare_typed)) <- function(trait, obj) {
     )
 }
 
-method(trait_absent_message, trait_class(bare_typed)) <- function(
+method(trait_test, classed_trait) <- function(trait, obj) {
+  test_vec_set_relation(
+    obj = class(obj), 
+    vec = trait@classes, 
+    relation = trait@inherits
+  )
+}
+
+method(trait_test, sized_trait) <- function(trait, obj) {
+  vctrs::vec_size(obj) == trait@size
+}
+
+method(trait_test, complete_trait) <- function(trait, obj) {
+  !vctrs::vec_any_missing(obj)
+}
+
+method(trait_test, unduplicated_trait) <- function(trait, obj) {
+  !vctrs::vec_duplicate_any(obj)
+}
+
+method(trait_test, is_vector_trait) <- function(trait, obj) {
+  vctrs::obj_is_vector(obj)
+}
+
+method(trait_test, is_atomic_trait) <- function(trait, obj) {
+  is.atomic(obj)
+}
+
+# trait_validate/absent_message ------------------------------------------------
+
+# method(trait_validate, bare_typed_trait) <- function(trait, obj, obj_name) {}
+
+method(trait_absent_message, bare_typed_trait) <- function(
   trait,
   obj,
   obj_name
 ) {
-  obj_name <- cli_escape(obj_name)
   header <- format_styled(
     "{.arg {obj_name}} must be a bare {.cls {trait@typeof}}."
   )
@@ -74,241 +152,62 @@ method(trait_absent_message, trait_class(bare_typed)) <- function(
   c(i = header, x = footer)
 }
 
-method(trait_present_string, trait_class(bare_typed)) <- function(
-  trait,
-  obj_name
-) {
-  format_styled("{.arg {obj_name}} is a bare {.cls {trait@typeof}}.")
-}
+# method(trait_validate, classed_trait) <- function(trait, obj, obj_name) {}
 
-# TODO:
-method(trait_invalid_message, trait_class(bare_typed)) <- function(trait) {}
-
-bare_typed_inline_rules <- list(
-  new_inline_rule(
-    validate_factory = custom_inline_trait_validate({
-      test_expr <- switch(
-        trait@typeof,
-        double = rlang::expr(
-          !base::is.object(!!obj_sym) && base::is.double(!!obj_sym)
-        ),
-        integer = rlang::expr(
-          !base::is.object(!!obj_sym) && base::is.integer(!!obj_sym)
-        ),
-        logical = rlang::expr(
-          !base::is.object(!!obj_sym) && base::is.logical(!!obj_sym)
-        ),
-        character = rlang::expr(
-          !base::is.object(!!obj_sym) && base::is.character(!!obj_sym)
-        ),
-        complex = rlang::expr(
-          !base::is.object(!!obj_sym) && base::is.complex(!!obj_sym)
-        ),
-        raw = rlang::expr(
-          !base::is.object(!!obj_sym) && base::is.raw(!!obj_sym)
-        ),
-        list = rlang::expr(
-          !base::is.object(!!obj_sym) && base::is.list(!!obj_sym)
-        ),
-        `NULL` = rlang::expr(
-          !base::is.object(!!obj_sym) && base::is.null(!!obj_sym)
-        ),
-        environment = rlang::expr(
-          !base::is.object(!!obj_sym) && base::is.environment(!!obj_sym)
-        ),
-        symbol = rlang::expr(
-          !base::is.object(!!obj_sym) && base::is.symbol(!!obj_sym)
-        ),
-        pairlist = rlang::expr(
-          !base::is.object(!!obj_sym) && base::is.pairlist(!!obj_sym)
-        ),
-        language = rlang::expr(
-          !base::is.object(!!obj_sym) && base::is.language(!!obj_sym)
-        ),
-        expression = rlang::expr(
-          !base::is.object(!!obj_sym) && base::is.expression(!!obj_sym)
-        ),
-        `S4` = ,
-        closure = ,
-        special = ,
-        builtin = ,
-        externalptr = ,
-        weakref = ,
-        promise = ,
-        char = ,
-        bytecode = ,
-        any = ,
-        `...` = ,
-        `ANY` = rlang::expr(
-          !base::is.object(!!obj_sym) &&
-            base::typeof(!!obj_sym) == !!trait@typeof
-        )
-      )
-      rlang::expr(
-        if (!(!!test_expr)) trait_absent_message(!!trait, !!obj_sym, !!obj_name)
-      )
-    }),
-    requires = requires_test_obj_is_vector
-  )
-)
-
-method(trait_inline_rules, trait_class(bare_typed)) <- function(trait) {
-  bare_typed_inline_rules
-}
-
-# classed ----------------------------------------------------------------------
-
-# TODO: Make `inherits` consistent with `relation`, you can allow some subset however
-classed <- new_trait(
-  "inherits_trait",
-  parameters = rlang::pairlist2(
-    classes = ,
-    inherits = "all"
-  )
-)
-
-method(trait_name, trait_class(classed)) <- function(trait) {
-  classes <- fmt_asis_collapse(trait@classes, n_elm_max = Inf, sep = "/")
-  paste0('classed("', classes, '")') # classed(POSIXct/POSIXt)
-}
-
-method(trait_test, trait_class(classed)) <- function(trait, obj) {
-  switch(
-    trait@inherits,
-    all = inherits_all(obj, trait@classes),
-    any = inherits(obj, trait@classes),
-    only = setequal(class(obj), trait@classes),
-    exacty = identical(class(obj), trait@classes)
-  )
-}
-
-# TODO: Finish this absent message!
-method(trait_absent_message, trait_class(classed)) <- function(
+method(trait_absent_message, classed_trait) <- function(
   trait,
   obj,
   obj_name
 ) {
-  obj_name <- cli_escape(obj_name)
+  classes <- trait@classes
   inherits <- trait@inherits
-  header <- format_styled(switch(
-    # TODO: Better errors, we'll want to use vectors for some of these
-    inherits,
-    all = "{.arg {obj_name}} must inherit all of {.cls {trait@classes}}.",
-    any = "{.arg {obj_name}} must inherit at least one of {.cls {trait@classes}}.",
-    only = "{.arg {obj_name}} must inherit only classes from {.cls {trait@classes}}.",
-    exacty = "{.arg {obj_name}} must have class {.cls {trait@classes}}."
-  ))
-
+  classes_str <- fmt_asis_collapse(backtick(classes))
   obj_classes <- class(obj)
-  obj_class_name <- glue::glue("class(", obj_name, ")")
+  obj_class_name <- format_styled("class({.arg {obj_name}})")
+
+  header <- switch(
+    inherits,
+    all_of = format_styled("{.arg {obj_name}} must inherit all classes: <<classes_str>>."),
+    any_of = format_styled("{.arg {obj_name}} must inherit at least one class from: <<classes_str>>."),
+    subset_of = format_styled("{.arg {obj_name}} must inherit only classes from: <<classes_str>>."),
+    same = format_styled("{.arg {obj_name}} must have exactly the class: {.cls {classes}}.")
+  )
+
   body <- switch(
     inherits,
-    all = bad_all_of_message(obj_class_name, obj_classes, trait@classes),
-    any = bad_any_of_message(obj_class_name, obj_classes, trait@classes),
-    only = bad_same_set_message(obj_class_name, obj_classes, trait@classes),
-    exacty = bad_same_vec_message(obj_class_name, obj_classes, trait@classes)
+    all_of = bullet_missing_vec(obj_class_name, setdiff(obj_classes, classes)),
+    any_of = bullet_matching_vec(obj_class_name, NULL),
+    subset_of = bullet_unexpected_vec(obj_class_name, setdiff(classes, obj_classes)),
+    same = validate_relation_same(obj_classes, classes, obj_class_name)
   )
 
   c(i = header, body)
 }
 
-method(trait_present_string, trait_class(classed)) <- function(
-  trait,
-  obj_name
-) {
-  format_styled("{.arg {obj_name}} is a bare {.cls {trait@typeof}}.")
-}
+# method(trait_validate, sized_trait) <- function(trait, obj, obj_name) {}
 
-# TODO:
-method(trait_invalid_message, trait_class(classed)) <- function(trait) {}
-
-# TODO:
-method(trait_inline_rules, trait_class(classed)) <- function(trait) {}
-
-# sized ------------------------------------------------------------------------
-
-sized <- new_trait("sized", parameters = rlang::pairlist2(size = , ))
-
-method(trait_test, trait_class(sized)) <- function(trait, obj) {
-  vctrs::obj_is_vector(obj) && vctrs::vec_size(obj) == trait@size
-}
-
-method(trait_absent_message, trait_class(sized)) <- function(
+method(trait_absent_message, sized_trait) <- function(
   trait,
   obj,
   obj_name
 ) {
-  obj_name <- cli_escape(obj_name)
-  if (!vctrs::obj_is_vector(obj)) {
-    return(c(
-      i = format_styled(
-        "{.arg {obj_name}} must be a {.pkg vctrs} style vector of size {trait@size}."
-      ),
-      x = format_styled("{.arg {obj_name}} is <<fmt_r_type(obj)>>.")
-    ))
-  }
-
   if (vec_vctrs_type(obj) == "bare_dataframe") {
-    must <- "have {.val {trait@size}} rows"
-    not <- "{.val {vctrs::vec_size(obj)}} rows"
+    must <- "have {trait@size} rows"
+    not <- "{vctrs::vec_size(obj)} rows"
   } else {
-    must <- "be size {.val {trait@size}}"
-    not <- "size {.val {vctrs::vec_size(obj)}}"
+    must <- "be size {trait@size}"
+    not <- "size {vctrs::vec_size(obj)}"
   }
   c(x = format_styled("{.arg {obj_name}} must <<must>>, not <<not>>."))
 }
 
-method(trait_present_string, trait_class(sized)) <- function(trait, obj_name) {
-  format_styled("{.arg {obj_name}} is size {trait@size}.")
-}
+# method(trait_validate, complete_trait) <- function(trait, obj, obj_name) {}
 
-# TODO:
-method(trait_invalid_message, trait_class(sized)) <- function(trait) {}
-
-sized_inline_rules <- list(
-  new_inline_rule(
-    inline_trait_validate(vctrs::vec_size(!!obj_sym) == !!trait@size),
-    requires = requires_test_obj_is_vector
-  ),
-  new_inline_rule(
-    inline_trait_validate(
-      vctrs::obj_is_vector(!!obj_sym) &&
-        vctrs::vec_size(!!obj_sym) == !!trait@size
-    )
-  )
-)
-
-method(trait_inline_rules, trait_class(sized)) <- function(trait) {
-  sized_inline_rules
-}
-
-# complete ---------------------------------------------------------------------
-
-# TODO: Set a size threshold (globally) for these kinds of location checks, e.g.
-# `vctrs::vec_detect_missing(obj)`, beyond which we just report the presence of
-# "bad" elements and not their locations or count.
-
-complete <- new_trait("complete")
-
-method(trait_test, trait_class(complete)) <- function(trait, obj) {
-  vctrs::obj_is_vector(obj) && !vctrs::vec_any_missing(obj)
-}
-
-method(trait_absent_message, trait_class(complete)) <- function(
+method(trait_absent_message, complete_trait) <- function(
   trait,
   obj,
   obj_name
 ) {
-  obj_name <- cli_escape(obj_name)
-  if (!vctrs::obj_is_vector(obj)) {
-    return(c(
-      i = format_styled(
-        "{.arg {obj_name}} must be a vector containing no missing elements."
-      ),
-      x = format_styled("{.arg {obj_name}} is <<fmt_r_type(obj)>>.")
-    ))
-  }
-
   missing_at <- vctrs::vec_detect_missing(obj)
   obj_vctrs_type <- vec_vctrs_type(obj)
   if (obj_vctrs_type == "bare_dataframe") {
@@ -327,56 +226,13 @@ method(trait_absent_message, trait_class(complete)) <- function(
   )
 }
 
-method(trait_present_string, trait_class(complete)) <- function(
-  trait,
-  obj_name
-) {
-  format_styled("{.arg {obj_name}} contains no missing values.")
-}
+# method(trait_validate, unduplicated_trait) <- function(trait, obj, obj_name) {}
 
-method(trait_invalid_message, trait_class(complete)) <- function(trait) {
-  NULL
-}
-
-complete_inline_rules <- list(
-  new_inline_rule(
-    inline_trait_validate(!vctrs::vec_any_missing(!!obj_sym)),
-    requires = requires_test_obj_is_vector
-  ),
-  new_inline_rule(
-    inline_trait_validate(
-      vctrs::obj_is_vector(!!obj_sym) && !vctrs::vec_any_missing(!!obj_sym)
-    )
-  )
-)
-
-method(trait_inline_rules, trait_class(complete)) <- function(trait) {
-  complete_inline_rules
-}
-
-# unduplicated -----------------------------------------------------------------
-
-unduplicated <- new_trait("unduplicated")
-
-method(trait_test, trait_class(unduplicated)) <- function(trait, obj) {
-  vctrs::obj_is_vector(obj) && !vctrs::vec_duplicate_any(obj)
-}
-
-method(trait_absent_message, trait_class(unduplicated)) <- function(
+method(trait_absent_message, unduplicated_trait) <- function(
   trait,
   obj,
   obj_name
 ) {
-  obj_name <- cli_escape(obj_name)
-  if (!vctrs::obj_is_vector(obj)) {
-    return(c(
-      i = format_styled(
-        "{.arg {obj_name}} must be a vector with distinct elements."
-      ),
-      x = format_styled("{.arg {obj_name}} is <<fmt_r_type(obj)>>.")
-    ))
-  }
-
   duplicated_at <- vctrs::vec_duplicate_detect(obj)
   if (vec_vctrs_type(obj) == "bare_dataframe") {
     at <- fmt_at_locs(duplicated_at, "row")
@@ -389,108 +245,139 @@ method(trait_absent_message, trait_class(unduplicated)) <- function(
   )
 }
 
-method(trait_present_string, trait_class(unduplicated)) <- function(
-  trait,
-  obj_name
-) {
-  format_styled("{.arg {obj_name}} contains no duplicated values.")
-}
+# method(trait_validate, is_vector_trait) <- function(trait, obj, obj_name) {}
 
-method(trait_invalid_message, trait_class(unduplicated)) <- function(trait) {
-  NULL
-}
-
-
-unduplicated_inline_rules <- list(
-  new_inline_rule(
-    inline_trait_validate(!vctrs::vec_duplicate_any(!!obj_sym)),
-    requires = requires_test_obj_is_vector
-  ),
-  new_inline_rule(
-    inline_trait_validate(
-      vctrs::obj_is_vector(!!obj_sym) && !vctrs::vec_duplicate_any(!!obj_sym)
-    )
-  )
-)
-
-method(trait_inline_rules, trait_class(unduplicated)) <- function(trait) {
-  unduplicated_inline_rules
-}
-
-# unexported -------------------------------------------------------------------
-
-# These are required for some named types, but are not generally useful.
-
-## trait_obj_is_vector ---------------------------------------------------------
-
-trait_obj_is_vector <- new_trait("trait_obj_is_vector")
-
-method(trait_test, trait_class(trait_obj_is_vector)) <- function(trait, obj) {
-  vctrs::obj_is_vector(obj)
-}
-
-method(trait_absent_message, trait_class(trait_obj_is_vector)) <- function(
+method(trait_absent_message, is_vector_trait) <- function(
   trait,
   obj,
   obj_name
 ) {
-  obj_name <- cli_escape(obj_name)
   c(
     i = format_styled("{.arg {obj_name}} must be a {.pkg vctrs} style vector."),
     x = format_styled("{.arg {obj_name}} is <<fmt_r_type(obj)>>.")
   )
 }
 
-method(trait_present_string, trait_class(trait_obj_is_vector)) <- function(
-  trait,
-  obj_name
-) {
-  format_styled("{.arg {obj_name}} is a {.pkg vctrs} style vector.")
-}
+# method(trait_validate, is_atomic_trait) <- function(trait, obj, obj_name) {}
 
-# TODO:
-method(trait_invalid_message, trait_class(trait_obj_is_vector)) <- function(
-  trait
-) {}
-
-# TODO:
-method(trait_inline_rules, trait_class(trait_obj_is_vector)) <- function(
-  trait
-) {}
-
-## trait_obj_is_atomic ---------------------------------------------------------
-
-trait_obj_is_atomic <- new_trait("trait_obj_is_atomic")
-
-method(trait_test, trait_class(trait_obj_is_atomic)) <- function(trait, obj) {
-  !is.object(obj) && is.atomic(obj)
-}
-
-method(trait_absent_message, trait_class(trait_obj_is_atomic)) <- function(
+method(trait_absent_message, is_atomic_trait) <- function(
   trait,
   obj,
   obj_name
 ) {
-  obj_name <- cli_escape(obj_name)
   c(
     i = format_styled("{.arg {obj_name}} must be a bare atomic vector."),
     x = format_styled("{.arg {obj_name}} is <<fmt_r_type(obj)>>.")
   )
 }
 
-method(trait_present_string, trait_class(trait_obj_is_atomic)) <- function(
-  trait,
-  obj_name
-) {
+# trait_present_string ---------------------------------------------------------
+
+method(trait_present_string, bare_typed_trait) <- function(trait, obj_name) {
+  format_styled("{.arg {obj_name}} is a bare {.cls {trait@typeof}}.")
+}
+
+method(trait_present_string, classed_trait) <- function(trait, obj_name) {
+  classes_str <- commas(backtick(trait@classes))
+  switch(
+    trait@inherits,
+    all_of = format_styled("{.arg {obj_name}} inherits all of: <<classes_str>>."),
+    any_of = format_styled("{.arg {obj_name}} inherits at least one of: <<classes_str>>."),
+    subset_of = format_styled("{.arg {obj_name}} inherits only from: <<classes_str>>."),
+    same = format_styled("{.arg {obj_name}} has exactly the class {.cls {trait@classes}}.")
+  )
+}
+
+method(trait_present_string, sized_trait) <- function(trait, obj_name) {
+  format_styled("{.arg {obj_name}} is size {trait@size}.")
+}
+
+method(trait_present_string, complete_trait) <- function(trait, obj_name) {
+  format_styled("{.arg {obj_name}} contains no missing values.")
+}
+
+method(trait_present_string, unduplicated_trait) <- function(trait, obj_name) {
+  format_styled("{.arg {obj_name}} contains no duplicated values.")
+}
+
+method(trait_present_string, is_vector_trait) <- function(trait, obj_name) {
+  format_styled("{.arg {obj_name}} is a {.pkg vctrs} style vector.")
+}
+
+method(trait_present_string, is_atomic_trait) <- function(trait, obj_name) {
   format_styled("{.arg {obj_name}} is a bare atomic vector.")
 }
 
-# TODO:
-method(trait_invalid_message, trait_class(trait_obj_is_atomic)) <- function(
-  trait
-) {}
+# trait_test_inline/validate_inline --------------------------------------------
+
+# method(trait_validate_inline, bare_typed_trait) <- function(trait, obj_sym, obj_name) {}
+
+method(trait_test_inline, bare_typed_trait) <- function(trait, obj_sym) {
+  typeof_expr <- switch(
+    trait@typeof,
+    double = rlang::expr(base::is.double(!!obj_sym)),
+    integer = rlang::expr(base::is.integer(!!obj_sym)),
+    logical = rlang::expr(base::is.logical(!!obj_sym)),
+    character = rlang::expr(base::is.character(!!obj_sym)),
+    complex = rlang::expr(base::is.complex(!!obj_sym)),
+    raw = rlang::expr(base::is.raw(!!obj_sym)),
+    list = rlang::expr(base::is.list(!!obj_sym)),
+    `NULL` = rlang::expr(base::is.null(!!obj_sym)),
+    environment = rlang::expr(base::is.environment(!!obj_sym)),
+    symbol = rlang::expr(base::is.symbol(!!obj_sym)),
+    pairlist = rlang::expr(base::is.pairlist(!!obj_sym)),
+    language = rlang::expr(base::is.language(!!obj_sym)),
+    expression = rlang::expr(base::is.expression(!!obj_sym)),
+    `S4` = ,
+    closure = ,
+    special = ,
+    builtin = ,
+    externalptr = ,
+    weakref = ,
+    promise = ,
+    char = ,
+    bytecode = ,
+    any = ,
+    `...` = ,
+    `ANY` = rlang::expr(base::typeof(!!obj_sym) == !!trait@typeof)
+  )
+    
+  rlang::expr(is.object(!!obj_sym) && !!typeof_expr)
+}
+
+# method(trait_validate_inline, classed_trait) <- function(trait, obj_sym, obj_name) {}
 
 # TODO:
-method(trait_inline_rules, trait_class(trait_obj_is_atomic)) <- function(
-  trait
-) {}
+method(trait_test_inline, classed_trait) <- function(trait, obj_sym) {
+  NULL
+}
+
+# method(trait_validate_inline, sized_trait) <- function(trait, obj_sym, obj_name) {}
+
+method(trait_test_inline, sized_trait) <- function(trait, obj_sym) {
+  rlang::expr(vctrs::vec_size(!!obj_sym) == !!trait@size)
+}
+
+# method(trait_validate_inline, complete_trait) <- function(trait, obj_sym, obj_name) {}
+
+method(trait_test_inline, complete_trait) <- function(trait, obj_sym) {
+  rlang::expr(!vctrs::vec_any_missing(!!obj_sym))
+}
+
+# method(trait_validate_inline, unduplicated_trait) <- function(trait, obj_sym, obj_name) {}
+
+method(trait_test_inline, unduplicated_trait) <- function(trait, obj_sym) {
+  rlang::expr(!vctrs::vec_duplicate_any(!!obj_sym))
+}
+
+# method(trait_validate_inline, is_vector_trait) <- function(trait, obj_sym, obj_name) {}
+
+method(trait_test_inline, is_vector_trait) <- function(trait, obj_sym) {
+  rlang::expr(vctrs::obj_is_vector(!!obj_sym))
+}
+
+# method(trait_validate_inline, is_atomic_trait) <- function(trait, obj_sym, obj_name) {}
+
+method(trait_test_inline, is_atomic_trait) <- function(trait, obj_sym) {
+  rlang::expr(base::is.atomic(!!obj_sym))
+}

@@ -1,53 +1,143 @@
-# TODO: Document with roxygen, follow S7 example
+# definition -------------------------------------------------------------------
+
 t_vector <- NULL
+
 t_atomic <- NULL
+
 t_integer <- t_int <- NULL
+
 t_logical <- t_lgl <- NULL
+
 t_bool <- NULL
+
 t_dots <- NULL
 
+# package methods --------------------------------------------------------------
+
+method(type_name, type_class(t_any)) <- function(type) {
+  "any"
+}
+
+method(type_present_string, type_class(t_any)) <- function(type, obj_name) {
+  format_styled("{.arg {obj_name}} is an object in {.emph R}.")
+}
+
+method(type_present_message, type_class(t_any)) <- function(type, obj_name) {
+  type_present_string(type, obj_name)
+}
+
 on_load_core_types <- function() {
+  # t_vector -------------------------------------------------------------------
+
   t_vector <<- new_named_type(
-    "union_vector",
+    "vector",
     parent_type = t_any,
     traits = list(
-      trait_obj_is_vector()
+      is_vector_trait()
     )
   )
 
+  method(type_name, type_class(t_vector)) <- function(type) {
+    "vector"
+  }
+
+  method(type_present_string, type_class(t_vector)) <- function(type, obj_name) {
+    format_styled("{.arg {obj_name}} is a {.pkg vctrs} style vector.")
+  }
+
+  method(type_present_message, type_class(t_vector)) <- function(type, obj_name) {
+    type_present_string(type, obj_name)
+  }
+
+  # t_atomic -------------------------------------------------------------------
+
   t_atomic <<- new_named_type(
-    "union_atomic",
+    "atomic",
     parent_type = t_vector,
     traits = list(
-      trait_obj_is_atomic()
+      is_atomic_trait()
     )
   )
+
+  method(type_name, type_class(t_atomic)) <- function(type) {
+    "atomic"
+  }
+
+  method(type_present_string, type_class(t_atomic)) <- function(type, obj_name) {
+    format_styled("{.arg {obj_name}} is an atomic vector.")
+  }
+
+  method(type_present_message, type_class(t_atomic)) <- function(type, obj_name) {
+    type_present_string(type, obj_name)
+  }
+
+  # t_integer ------------------------------------------------------------------
 
   t_integer <<- t_int <<- new_named_type(
     "bare_integer",
     parent_type = t_atomic,
     traits = list(
-      bare_typed(typeof = "integer")
+      bare_typed_trait("integer")
     )
   )
+
+  method(type_name, type_class(t_integer)) <- function(type) {
+    "integer"
+  }
+
+  method(type_present_string, type_class(t_integer)) <- function(type, obj_name) {
+    bare_type_present_string(obj_name, "integer vector")
+  }
+
+  method(type_present_message, type_class(t_integer)) <- function(type, obj_name) {
+    type_present_string(type, obj_name)
+  }
+
+  # t_logical ------------------------------------------------------------------
 
   t_logical <<- t_lgl <<- new_named_type(
     "bare_logical",
     parent_type = t_atomic,
     traits = list(
-      bare_typed(typeof = "logical")
+      bare_typed_trait("logical")
     )
   )
+
+  method(type_name, type_class(t_logical)) <- function(type) {
+    "logical"
+  }
+
+  method(type_present_string, type_class(t_logical)) <- function(type, obj_name) {
+    bare_type_present_string(obj_name, "logical vector")
+  }
+
+  method(type_present_message, type_class(t_logical)) <- function(type, obj_name) {
+    type_present_string(type, obj_name)
+  }
+
+  # t_bool ---------------------------------------------------------------------
 
   t_bool <<- new_named_type(
     "bare_bool",
     parent_type = t_logical,
     traits = list(
-      sized(size = 1L),
-      complete()
+      sized_trait(1L),
+      complete_trait()
     ),
     inherit_traits = TRUE
   )
+
+  method(type_name, type_class(t_bool)) <- function(type) {
+    "boolean"
+  }
+
+  method(type_present_string, type_class(t_bool)) <- function(type, obj_name) {
+    format_styled("{.arg {obj_name}} is a boolean ({.val {TRUE}} or {.val {FALSE}}).")
+  }
+
+  method(type_present_message, type_class(t_bool)) <- function(type, obj_name) {
+    type_present_string(type, obj_name)
+  }
 
   method(type_absent_message, type_class(t_bool)) <- function(
     type,
@@ -77,8 +167,8 @@ on_load_core_types <- function() {
     )
   }
 
-  method(type_inline_validate_factory, type_class(t_bool)) <- function(type) {
-    inline_type_validate(
+  method(type_test_inline, type_class(t_bool)) <- function(type, obj_sym) {
+    rlang::expr(
       !base::is.object(!!obj_sym) &&
         base::is.logical(!!obj_sym) &&
         base::length(!!obj_sym) == 1L &&
@@ -86,9 +176,18 @@ on_load_core_types <- function() {
     )
   }
 
-  # For use in functions only
+  # t_dots ---------------------------------------------------------------------
+
+  # A special type for use in functions only.
+
   t_dots <<- new_refined_type(
     parent_type = t_any,
     modifications = "endotted"
   )
+}
+
+# helpers ----------------------------------------------------------------------
+
+bare_type_present_string <- function(obj_name, what) {
+  format_styled("{.arg {obj_name}} is a bare <<what>>.")
 }

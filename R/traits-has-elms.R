@@ -1,8 +1,6 @@
 # wrappers ---------------------------------------------------------------------
 
 has_names <- function(.type = t_any, names, match = "all") {
-  # TODO: Maybe `obj_assert_type()` for consistency?
-  # - Or, apply `as_typed_function()` on load...
   assert_is_type(.type)
   assert_is_chr(names, complete = TRUE)
   match <- normalize_relation(match)
@@ -34,9 +32,6 @@ has_cols <- function(.type = t_any, cols, match = "all") {
   match <- normalize_relation(match)
 
   trait_has_elms(
-    # TODO: Document that `has_cols()` verifies data.frame *class*
-    # trait_has_elms() doesn't used `required`, as it's requirements depend on
-    # the value of `which_elm`. 
     .type = .type |> classed("data.frame"),
     elms = cols,
     which_elm = "col",
@@ -46,6 +41,7 @@ has_cols <- function(.type = t_any, cols, match = "all") {
 
 # implementation ---------------------------------------------------------------
 
+if (FALSE) {
 trait_has_elms <- new_trait(
   "trait_has_elms",
   parameters = rlang::pairlist2(
@@ -134,8 +130,10 @@ method(trait_present_string, trait_class(trait_has_elms)) <- function(
     same_as = format_styled(
       "{.arg {obj_name}} has exactly the {fmt$label}s, in order: <<elms_str>>."
     ),
-    perm_of = format_styled(
+    permutation_of = format_styled(
       "{.arg {obj_name}} has exactly the {fmt$label}s, in any order: <<elms_str>>."
     )
   )
 }
+}
+

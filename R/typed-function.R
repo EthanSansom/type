@@ -1,5 +1,7 @@
 # typed ------------------------------------------------------------------------
 
+# TODO: Remove the `fun` argument!
+#
 # TODO: Guard against missingness explicitly with a `check_required()` call
 #       at the top for any typed arguments not explicitly marked as `t_any`,
 #       `t_missing`, or `optional()`.
@@ -60,14 +62,14 @@ typed <- function(..., fun = NULL, returns = NULL) {
       arg_name = args_names,
       arg_sym = args_syms
     ),
-    \(arg_type, arg_name, arg_sym) {
-      if (is_type_any(arg_type)) { # TODO: `is_type_any` will need to be exported
+    function(arg_type, arg_name, arg_sym) {
+      if (is_type_any(arg_type)) {
         return(NULL)
       }
       arg_assertion_expr(arg_type, arg_name, arg_sym, error_call = parent_frame)
     }
   )
-  args_type_assertions <- drop(args_type_assertions, is_null)
+  args_type_assertions <- drop(args_type_assertions, is.null)
 
   if (!is.null(returns)) {
     assert_is_type(returns)
@@ -99,7 +101,7 @@ typed <- function(..., fun = NULL, returns = NULL) {
 
 parse_typed_dots <- function(..., .error_call = rlang::caller_env()) {
   dots_exprs <- rlang::enexprs(...)
-  fun_exprs <- keep(dots_exprs, is_call, name = "function")
+  fun_exprs <- keep(dots_exprs, rlang::is_call, name = "function")
   has_fun <- length(fun_exprs) == 1L
 
   # Currently allowing at most one dot, but this will be relaxed in the future
@@ -269,13 +271,12 @@ arg_assertion_expr <- function(arg_type, arg_name, arg_sym, error_call) {
   validate_expr <- type_validate_expr(
     type = arg_type,
     obj_sym = arg_sym,
-    obj_name = arg_name,
-    env = rlang::expr(rlang::caller_env())
+    obj_name = arg_name
   )
   assertion_expr <- rlang::call2(
-    "inline_abort_if_mistyped_arg",
+    "inlined_abort_if_mistyped",
     arg_name = arg_name,
-    arg_validation_result = validate_expr,
+    arg_validation = validate_expr,
     .ns = "type"
   )
 
@@ -474,30 +475,14 @@ inline_try_unsafe_arg <- function(
   )
 }
 
-inline_abort_if_mistyped_arg <- function(
-  arg_name,
-  arg_validation_result,
-  error_call = rlang::caller_env()
-) {
-  if (is.null(arg_validation_result)) {
-    return(NULL)
-  }
-  abort_mistyped(
-    c(
-      format_styled("Argument {.arg {arg_name}} is mistyped."),
-      arg_validation_result
-    ),
-    error_call = error_call,
-    error_subclass = "type_error_mistyped_arg"
-  )
-}
-
-# typed class ------------------------------------------------------------------
+# methods ----------------------------------------------------------------------
 
 #' @export
 print.type_typed_function <- function(x, ...) {
-  body(x) <- attr(x, "untyped_body")
+  untyped <- unclass(x)
+  body(untyped) <- attr(x, "untyped_body")
 
   cat("<typed>\n")
-  NextMethod()
+  print(untyped)
+  return(invisible(x))
 }
