@@ -1,16 +1,10 @@
 # definition -------------------------------------------------------------------
 
-t_vector <- NULL
-
 t_atomic <- NULL
-
-t_integer <- t_int <- NULL
 
 t_logical <- t_lgl <- NULL
 
 t_bool <- NULL
-
-t_dots <- NULL
 
 # package methods --------------------------------------------------------------
 
@@ -27,28 +21,6 @@ method(type_present_message, type_class(t_any)) <- function(type, obj_name) {
 }
 
 on_load_core_types <- function() {
-  # t_vector -------------------------------------------------------------------
-
-  t_vector <<- new_named_type(
-    "vector",
-    parent_type = t_any,
-    traits = list(
-      is_vector_trait()
-    )
-  )
-
-  method(type_name, type_class(t_vector)) <- function(type) {
-    "vector"
-  }
-
-  method(type_present_string, type_class(t_vector)) <- function(type, obj_name) {
-    format_styled("{.arg {obj_name}} is a {.pkg vctrs} style vector.")
-  }
-
-  method(type_present_message, type_class(t_vector)) <- function(type, obj_name) {
-    type_present_string(type, obj_name)
-  }
-
   # t_atomic -------------------------------------------------------------------
 
   t_atomic <<- new_named_type(
@@ -68,28 +40,6 @@ on_load_core_types <- function() {
   }
 
   method(type_present_message, type_class(t_atomic)) <- function(type, obj_name) {
-    type_present_string(type, obj_name)
-  }
-
-  # t_integer ------------------------------------------------------------------
-
-  t_integer <<- t_int <<- new_named_type(
-    "bare_integer",
-    parent_type = t_atomic,
-    traits = list(
-      bare_typed_trait("integer")
-    )
-  )
-
-  method(type_name, type_class(t_integer)) <- function(type) {
-    "integer"
-  }
-
-  method(type_present_string, type_class(t_integer)) <- function(type, obj_name) {
-    bare_type_present_string(obj_name, "integer vector")
-  }
-
-  method(type_present_message, type_class(t_integer)) <- function(type, obj_name) {
     type_present_string(type, obj_name)
   }
 
@@ -175,15 +125,6 @@ on_load_core_types <- function() {
         !base::is.na(!!obj_sym)
     )
   }
-
-  # t_dots ---------------------------------------------------------------------
-
-  # A special type for use in functions only.
-
-  t_dots <<- new_refined_type(
-    parent_type = t_any,
-    modifications = "endotted"
-  )
 }
 
 # helpers ----------------------------------------------------------------------

@@ -2,22 +2,7 @@
 
 bare_typed <- NULL
 
-# TODO: We'll define the traits properly once a `new_trait()` function is available 
-# rlang::on_load(
-#   bare_type <- new_trait(
-#     "bare_typed",
-#     params = list(
-#       # TODO: Finish the `within()` statement (also define a `within()` trait!)
-#       typeof = t_string |> within(c("logical", "character"))
-#     )
-#   )
-# )
-
 bare_typed_trait <- new_trait_class("bare_typed", params = "typeof")
-
-classed <- NULL
-
-classed_trait <- new_trait_class("classed", params = c("classes", "inherits"))
 
 sized <- NULL
 
@@ -26,10 +11,6 @@ sized_trait <- new_trait_class("sized", params = "size")
 complete <- NULL
 
 complete_trait <- new_trait_class("complete", params = character())
-
-unduplicated <- NULL
-
-unduplicated_trait <- new_trait_class("unduplicated", params = character())
 
 # Internal
 is_vector_trait <- new_trait_class("is_vector", params = character())
@@ -41,31 +22,12 @@ method(trait_name, bare_typed_trait) <- function(trait) {
   paste0('typeof("', trait@typeof, '")')
 }
 
-method(trait_name, classed_trait) <- function(trait) {
-  classes <- trait@classes
-  inherits <- trait@inherits
-
-  switch(
-    trait@inherits,
-    all_of = ,
-    any_of = ,
-    # inherits_any_of(factor, character)
-    subset_of = glue::glue("inherits_{abbr_vec_set_relation(inherits)}_({fmt_asis_collapse(classes)})"),
-    # classed(tbl_df/tbl/data.frame)
-    same = paste0("classed(", fmt_asis_collapse(classes, sep = "/") , ")")
-  )
-}
-
 method(trait_name, sized_trait) <- function(trait) {
   paste0("sized(", trait@size, ")")
 }
 
 method(trait_name, complete_trait) <- function(trait) {
   "complete()"
-}
-
-method(trait_name, unduplicated_trait) <- function(trait) {
-  "unduplicated()"
 }
 
 # trait_test -------------------------------------------------------------------
@@ -102,24 +64,12 @@ method(trait_test, bare_typed_trait) <- function(trait, obj) {
     )
 }
 
-method(trait_test, classed_trait) <- function(trait, obj) {
-  test_vec_set_relation(
-    obj = class(obj), 
-    vec = trait@classes, 
-    relation = trait@inherits
-  )
-}
-
 method(trait_test, sized_trait) <- function(trait, obj) {
   vctrs::vec_size(obj) == trait@size
 }
 
 method(trait_test, complete_trait) <- function(trait, obj) {
   !vctrs::vec_any_missing(obj)
-}
-
-method(trait_test, unduplicated_trait) <- function(trait, obj) {
-  !vctrs::vec_duplicate_any(obj)
 }
 
 method(trait_test, is_vector_trait) <- function(trait, obj) {
@@ -150,38 +100,6 @@ method(trait_absent_message, bare_typed_trait) <- function(
     footer <- format_styled("{.arg {obj_name}} is a bare {.cls {typeof(obj)}}.")
   }
   c(i = header, x = footer)
-}
-
-# method(trait_validate, classed_trait) <- function(trait, obj, obj_name) {}
-
-method(trait_absent_message, classed_trait) <- function(
-  trait,
-  obj,
-  obj_name
-) {
-  classes <- trait@classes
-  inherits <- trait@inherits
-  classes_str <- fmt_asis_collapse(backtick(classes))
-  obj_classes <- class(obj)
-  obj_class_name <- format_styled("class({.arg {obj_name}})")
-
-  header <- switch(
-    inherits,
-    all_of = format_styled("{.arg {obj_name}} must inherit all classes: <<classes_str>>."),
-    any_of = format_styled("{.arg {obj_name}} must inherit at least one class from: <<classes_str>>."),
-    subset_of = format_styled("{.arg {obj_name}} must inherit only classes from: <<classes_str>>."),
-    same = format_styled("{.arg {obj_name}} must have exactly the class: {.cls {classes}}.")
-  )
-
-  body <- switch(
-    inherits,
-    all_of = bullet_missing_vec(obj_class_name, setdiff(obj_classes, classes)),
-    any_of = bullet_matching_vec(obj_class_name, NULL),
-    subset_of = bullet_unexpected_vec(obj_class_name, setdiff(classes, obj_classes)),
-    same = validate_relation_same(obj_classes, classes, obj_class_name)
-  )
-
-  c(i = header, body)
 }
 
 # method(trait_validate, sized_trait) <- function(trait, obj, obj_name) {}
@@ -226,25 +144,6 @@ method(trait_absent_message, complete_trait) <- function(
   )
 }
 
-# method(trait_validate, unduplicated_trait) <- function(trait, obj, obj_name) {}
-
-method(trait_absent_message, unduplicated_trait) <- function(
-  trait,
-  obj,
-  obj_name
-) {
-  duplicated_at <- vctrs::vec_duplicate_detect(obj)
-  if (vec_vctrs_type(obj) == "bare_dataframe") {
-    at <- fmt_at_locs(duplicated_at, "row")
-  } else {
-    at <- fmt_at_locs(duplicated_at, "location")
-  }
-  c(
-    i = format_styled("{.arg {obj_name}} must not contain duplicate elements."),
-    x = format_styled("{.arg {obj_name}} contains duplicate elements <<at>>.")
-  )
-}
-
 # method(trait_validate, is_vector_trait) <- function(trait, obj, obj_name) {}
 
 method(trait_absent_message, is_vector_trait) <- function(
@@ -277,27 +176,12 @@ method(trait_present_string, bare_typed_trait) <- function(trait, obj_name) {
   format_styled("{.arg {obj_name}} is a bare {.cls {trait@typeof}}.")
 }
 
-method(trait_present_string, classed_trait) <- function(trait, obj_name) {
-  classes_str <- commas(backtick(trait@classes))
-  switch(
-    trait@inherits,
-    all_of = format_styled("{.arg {obj_name}} inherits all of: <<classes_str>>."),
-    any_of = format_styled("{.arg {obj_name}} inherits at least one of: <<classes_str>>."),
-    subset_of = format_styled("{.arg {obj_name}} inherits only from: <<classes_str>>."),
-    same = format_styled("{.arg {obj_name}} has exactly the class {.cls {trait@classes}}.")
-  )
-}
-
 method(trait_present_string, sized_trait) <- function(trait, obj_name) {
   format_styled("{.arg {obj_name}} is size {trait@size}.")
 }
 
 method(trait_present_string, complete_trait) <- function(trait, obj_name) {
   format_styled("{.arg {obj_name}} contains no missing values.")
-}
-
-method(trait_present_string, unduplicated_trait) <- function(trait, obj_name) {
-  format_styled("{.arg {obj_name}} contains no duplicated values.")
 }
 
 method(trait_present_string, is_vector_trait) <- function(trait, obj_name) {
@@ -345,13 +229,6 @@ method(trait_test_inline, bare_typed_trait) <- function(trait, obj_sym) {
   rlang::expr(is.object(!!obj_sym) && !!typeof_expr)
 }
 
-# method(trait_validate_inline, classed_trait) <- function(trait, obj_sym, obj_name) {}
-
-# TODO:
-method(trait_test_inline, classed_trait) <- function(trait, obj_sym) {
-  NULL
-}
-
 # method(trait_validate_inline, sized_trait) <- function(trait, obj_sym, obj_name) {}
 
 method(trait_test_inline, sized_trait) <- function(trait, obj_sym) {
@@ -362,12 +239,6 @@ method(trait_test_inline, sized_trait) <- function(trait, obj_sym) {
 
 method(trait_test_inline, complete_trait) <- function(trait, obj_sym) {
   rlang::expr(!vctrs::vec_any_missing(!!obj_sym))
-}
-
-# method(trait_validate_inline, unduplicated_trait) <- function(trait, obj_sym, obj_name) {}
-
-method(trait_test_inline, unduplicated_trait) <- function(trait, obj_sym) {
-  rlang::expr(!vctrs::vec_duplicate_any(!!obj_sym))
 }
 
 # method(trait_validate_inline, is_vector_trait) <- function(trait, obj_sym, obj_name) {}

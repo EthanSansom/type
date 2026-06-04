@@ -1,17 +1,11 @@
 # misc -------------------------------------------------------------------------
 
-# TODO: Remove some of these which aren't needed
-
 commas <- function(x) {
   paste(x, collapse = ", ")
 }
 
 collapse <- function(x, sep) {
   paste(x, collapse = sep)
-}
-
-c_commas <- function(x) {
-  paste0("c(", commas(x), ")")
 }
 
 backtick <- function(x) {
@@ -29,25 +23,13 @@ chr_trunc <- function(x, n_max, tail = "...") {
   x
 }
 
-chr_remove <- function(x, remove) {
-  gsub(remove, "", x)
-}
-
 str_to_title <- function(x) {
   s <- strsplit(x, " ")[[1]]
   paste(toupper(substring(s, 1, 1)), substring(s, 2), sep = "", collapse = " ")
 }
 
 oxford <- function(x, last = "and") {
-  n <- length(x)
-  if (n <= 1) {
-    return(x)
-  }
-  if (n == 2) {
-    return(paste(x[[1]], last, x[[2]]))
-  }
-  head <- paste(x[-n], collapse = ", ")
-  paste0(head, ", ", last, " ", x[[n]])
+  fmt_asis_collapse(x, n_elm_max = Inf, n_chr_max = Inf, last = last)
 }
 
 format_styled <- function(
@@ -62,153 +44,11 @@ format_styled <- function(
   )
 }
 
-format_plain <- function(
-  ...,
-  .envir = parent.frame(),
-  .glue_open = "<<",
-  .glue_close = ">>"
-) {
-  # TODO: Update this as needed
-  plain_theme <- list(
-    span.val = list(
-      before = "`",
-      after = "`",
-      color = "none",
-      "font-style" = "none"
-    ),
-    span.val_q = list(
-      before = '"',
-      after = '"',
-      color = "none",
-      "font-style" = "none"
-    ),
-    span.pkg = list(
-      before = "{",
-      after = "}",
-      color = "none",
-      "font-weight" = "none"
-    ),
-    span.cls = list(
-      before = "<",
-      after = ">",
-      color = "none",
-      "font-style" = "none"
-    ),
-    span.cls_q = list(
-      before = '"<',
-      after = '>"',
-      color = "none",
-      "font-style" = "none"
-    ),
-    span.fn = list(
-      before = "`",
-      after = "()`",
-      color = "none",
-      "font-style" = "none"
-    ),
-    span.arg = list(
-      before = "`",
-      after = "`",
-      color = "none",
-      "font-style" = "none"
-    ),
-    span.kbd = list(
-      before = "[",
-      after = "]",
-      color = "none",
-      "font-style" = "none"
-    ),
-    span.key = list(
-      before = "[",
-      after = "]",
-      color = "none",
-      "font-style" = "none"
-    ),
-    span.file = list(
-      before = "'",
-      after = "'",
-      color = "none",
-      "font-style" = "none"
-    ),
-    span.path = list(
-      before = "'",
-      after = "'",
-      color = "none",
-      "font-style" = "none"
-    ),
-    span.email = list(
-      before = "<",
-      after = ">",
-      color = "none",
-      "font-style" = "none"
-    ),
-    span.url = list(
-      before = "<",
-      after = ">",
-      color = "none",
-      "font-style" = "none"
-    ),
-    span.var = list(
-      before = "`",
-      after = "`",
-      color = "none",
-      "font-style" = "none"
-    ),
-    span.envvar = list(
-      before = "`",
-      after = "`",
-      color = "none",
-      "font-style" = "none"
-    ),
-    span.code = list(
-      before = "`",
-      after = "`",
-      color = "none",
-      "font-style" = "none"
-    ),
-    span.strong = list(
-      before = "*",
-      after = "*",
-      color = "none",
-      "font-weight" = "none"
-    ),
-    span.emph = list(
-      before = "_",
-      after = "_",
-      color = "none",
-      "font-style" = "none"
-    ),
-    span.field = list(
-      before = "`",
-      after = "`",
-      color = "none",
-      "font-style" = "none"
-    )
-  )
-  cli::cli_div(theme = plain_theme)
-  cli::format_inline(
-    glue::glue(..., .envir = .envir, .open = .glue_open, .close = .glue_close),
-    .envir = .envir
-  )
-}
-
 # Borrowed from {cli} with thanks:
 # https://github.com/r-lib/cli/blob/9cf4733030622fbfd21468e9a6d67041c5e64a56/R/utils.R#L13
 cli_escape <- function(x) {
   x <- gsub("{", "{{", x, fixed = TRUE)
   x <- gsub("}", "}}", x, fixed = TRUE)
-  x
-}
-
-cli_bullets_escape <- function(x) {
-  x <- gsub("<", "<<", x, fixed = TRUE)
-  x <- gsub(">", ">>", x, fixed = TRUE)
-  x
-}
-
-cli_bullets_unescape <- function(x) {
-  x <- gsub("<<", "<", x, fixed = TRUE)
-  x <- gsub(">>", ">", x, fixed = TRUE)
   x
 }
 
@@ -221,6 +61,18 @@ cat_bullets <- function(x) {
   bullets <- cli_bullets_escape(x)
   bullets <- cli_bullets_unescape(cli::format_bullets_raw(bullets))
   cat(bullets, sep = "\n")
+}
+
+cli_bullets_escape <- function(x) {
+  x <- gsub("<", "<<", x, fixed = TRUE)
+  x <- gsub(">", ">>", x, fixed = TRUE)
+  x
+}
+
+cli_bullets_unescape <- function(x) {
+  x <- gsub("<<", "<", x, fixed = TRUE)
+  x <- gsub(">>", ">", x, fixed = TRUE)
+  x
 }
 
 # formatters -------------------------------------------------------------------
@@ -305,9 +157,6 @@ fmt_asis_collapse <- function(
   collapse(c(truncated, "..."), sep = sep)
 }
 
-# TODO: Revise how `fmt_at_locs` works. Specifically, choose `n_elms_max`
-# and `n_chr_max` and use `fmt_vec_string()` consistently.
-
 fmt_at_locs <- function(where, place = c("location", "row")) {
   place <- rlang::arg_match0(place, c("location", "row"))
   places <- paste0(place, "s")
@@ -338,12 +187,10 @@ fmt_locs <- function(where) {
   }
 
   n <- length(where)
-  if (n == 1L) {
+  if (n <= 5) {
     fmt_vec_string(where)
-  } else if (n <= 5) {
-    backtick(c_commas(where))
   } else {
-    glue::glue("{backtick(c_commas(where))} and {n - 5} more")
+    glue::glue("{fmt_vec_string(where))} and {n - 5} more")
   }
 }
 

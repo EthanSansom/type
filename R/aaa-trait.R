@@ -94,9 +94,7 @@ method(trait_test_inline, trait) <- function(trait, obj_sym, ...) {
 
 method(trait_validate_inline, trait) <- function(trait, obj_sym, obj_name, ...) {
   test_expr <- trait_test_inline(trait, obj_sym)
-  if (rlang::is_zap(test_expr)) {
-    rlang::zap() # Indicates that the trait can be dropped (i.e. is redundant) 
-  } else if (is.null(test_expr)) {
+  if (is.null(test_expr)) {
     rlang::call2("trait_validate", trait, obj_sym, obj_name, .ns = "type")
   } else {
     message_expr <- rlang::call2("trait_absent_message", trait, obj_sym, obj_name, .ns = "type")

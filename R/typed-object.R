@@ -207,7 +207,7 @@ parse_declaration <- function(
     )
   }
 
-  type_abort_internal(
+  abort_internal(
     format_styled("Invalid declaration was unhandled: {.code <<expr_label>>}.")
   )
 }

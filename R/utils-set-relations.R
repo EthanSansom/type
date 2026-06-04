@@ -11,7 +11,7 @@ test_vec_set_relation <- function(obj, vec, relation) {
     setequal = test_relation_setequal(obj, vec),
     same = test_relation_same(obj, vec),
     perm_of = test_relation_perm_of(obj, vec),
-    type_abort_internal(format_styled("Unexpected relation: {relation}."))
+    abort_internal(format_styled("Unexpected relation: {relation}."))
   )
 }
 
@@ -32,7 +32,7 @@ validate_vec_set_relation <- function(
     setequal = validate_relation_setequal(obj, vec, obj_name, which_elm),
     same = validate_relation_same(obj, vec, obj_name, which_elm),
     perm_of = validate_relation_perm_of(obj, vec, obj_name, which_elm),
-    type_abort_internal(format_styled("Unexpected relation: {relation}."))
+    abort_internal(format_styled("Unexpected relation: {relation}."))
   )
 }
 
@@ -47,7 +47,7 @@ abbr_vec_set_relation <- function(relation) {
     setequal = "only",
     same = "same",
     perm_of = "perm_of",
-    type_abort_internal(format_styled("Unexpected relation: {relation}."))
+    abort_internal(format_styled("Unexpected relation: {relation}."))
   )
 }
 
