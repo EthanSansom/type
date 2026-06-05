@@ -20,7 +20,7 @@ typed <- function(..., fun = NULL, returns = NULL) {
   supplied_dots_fun <- dots_exprs$has_fun
   supplied_fun <- !is.null(fun)
   if (supplied_dots_fun && supplied_fun) {
-    type_abort_bad_input(c(
+    abort_bad_input(c(
       format_styled(
         "A function was supplied to both {.arg ...} and the {.arg fun} argument."
       ),
@@ -38,7 +38,7 @@ typed <- function(..., fun = NULL, returns = NULL) {
       } else {
         bad <- "the expression {.code {fun_label}}"
       }
-      type_abort_bad_input(c(
+      abort_bad_input(c(
         format_styled("{.arg fun} must be a function definition, not <<bad>>."),
         i = format_styled("Use the form {.code fun = function(...) {{...}}}.")
       ))
@@ -108,7 +108,7 @@ parse_typed_dots <- function(..., .error_call = rlang::caller_env()) {
   # to support `typed(t_T = t_int, function(x = t_T, y = t_T) {...})` syntax.
   if (length(dots_exprs) > 1L) {
     n <- length(dots_exprs)
-    type_abort_bad_input(
+    abort_bad_input(
       format_styled(
         "{.arg ...} must contain exactly one or no arguments, but {n} were supplied."
       ),
@@ -124,13 +124,13 @@ parse_typed_dots <- function(..., .error_call = rlang::caller_env()) {
     } else {
       bad <- "the expression {.code {expr_label}}"
     }
-    type_abort_bad_input(
+    abort_bad_input(
       format_styled("{.arg ..1} must be a function declaration, not <<bad>>."),
       error_call = .error_call
     )
   }
   # if (length(fun_exprs) > 1L) {
-  #   type_abort_bad_input(
+  #   abort_bad_input(
   #     format_styled("{.arg ...} may contain exactly one function declaration, not {length(fun_exprs)}."),
   #     error_call = .error_call
   #   )
@@ -170,7 +170,7 @@ parse_typed_fun_args <- function(
         )
       )
     }
-    type_abort_bad_input(message, error_call = error_call)
+    abort_bad_input(message, error_call = error_call)
   }
 
   list(
@@ -198,7 +198,7 @@ parse_typed_arg_expr <- function(
     type <- rlang::try_fetch(
       eval(type_expr, parent_frame),
       error = function(e) {
-        type_abort_bad_input(
+        abort_bad_input(
           format_styled("Can't type argument {.arg {arg_name}}."),
           parent = e,
           error_call = error_call
@@ -206,7 +206,7 @@ parse_typed_arg_expr <- function(
       }
     )
     if (!is_type(type)) {
-      type_abort_bad_input(
+      abort_bad_input(
         message = c(
           format_styled("Can't type argument {.arg {arg_name}}."),
           x = format_styled(
@@ -367,7 +367,7 @@ validate_arg_mods <- function(arg_name, arg_mods, error_call) {
   arg_mods <- unique(arg_mods)
 
   abort_mod <- function(...) {
-    type_abort_bad_input(c(...), call = error_call)
+    abort_bad_input(c(...), call = error_call)
   }
 
   bad_forbidden <- intersect(MOD_FORBIDDEN, arg_mods)

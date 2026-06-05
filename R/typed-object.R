@@ -8,7 +8,7 @@
 
 `%:%` <- function(type, declaration) {
   if (!is_type(type)) {
-    type_abort_bad_input(format_styled(
+    abort_bad_input(format_styled(
       "The left-hand side of {.code %:%} must be a type, ",
       "not <<fmt_r_type(type)>>."
     ))
@@ -130,7 +130,7 @@ parse_declaration <- function(
       eval(decl_expr[[2]], parent_frame),
       error = function(e) {
         init <- rlang::as_label(decl_expr[[2]])
-        type_abort_bad_input(
+        abort_bad_input(
           message = format_styled(
             "Can't evaluate the initial value {.code {init}} of {.arg {name}}."
           ),
@@ -144,7 +144,7 @@ parse_declaration <- function(
 
   expr_label <- rlang::as_label(decl_expr)
   if (rlang::is_symbol(decl_expr)) {
-    type_abort_bad_input(
+    abort_bad_input(
       message = c(
         format_styled(
           "The right-hand-side of {.fn `%:%`} must be a declaration, not the symbol {.code {expr_label}}."
@@ -162,7 +162,7 @@ parse_declaration <- function(
     is_namespaced <- rlang::is_call(decl_expr, c("::", ":::"))
     kind <- if (is_namespaced) "namespaced call" else "complex call"
 
-    type_abort_bad_input(
+    abort_bad_input(
       message = c(
         format_styled(
           "The right-hand side of {.fn `%:%`} must be a declaration ",
@@ -177,7 +177,7 @@ parse_declaration <- function(
   # From this point onward, we're dealing with an invalid simple call `foo(...)`
   if (length(decl_expr) == 1L) {
     name <- rlang::as_name(decl_expr[[1]])
-    type_abort_bad_input(
+    abort_bad_input(
       message = c(
         format_styled(
           "Attempted to declare {.code {name}} with no initial value."
@@ -193,7 +193,7 @@ parse_declaration <- function(
   if (length(decl_expr) > 2L) {
     name <- rlang::as_name(decl_expr[[1]])
     n <- length(decl_expr) - 1L
-    type_abort_bad_input(
+    abort_bad_input(
       message = c(
         format_styled(
           "Attempted to assign {n} initial values to {.code {name}}."
