@@ -14,7 +14,6 @@ BugReports: https://github.com/EthanSansom/type/issues
 Depends:
     R (>= 4.1.0)
 Imports: 
-    base,
     cli,
     glue,
     rlang,

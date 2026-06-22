@@ -1,36 +1,4 @@
-# misc -------------------------------------------------------------------------
-
-commas <- function(x) {
-  paste(x, collapse = ", ")
-}
-
-collapse <- function(x, sep) {
-  paste(x, collapse = sep)
-}
-
-backtick <- function(x) {
-  paste0("`", x, "`")
-}
-
-chr_encode <- function(x, quote = '"') {
-  encodeString(x, quote = quote)
-}
-
-chr_trunc <- function(x, n_max, tail = "...") {
-  n_max <- n_max
-  too_long <- nchar(x) > (n_max + nchar(tail))
-  x[too_long] <- paste0(substr(x[too_long], 0, max(0, n_max)), tail)
-  x
-}
-
-str_to_title <- function(x) {
-  s <- strsplit(x, " ")[[1]]
-  paste(toupper(substring(s, 1, 1)), substring(s, 2), sep = "", collapse = " ")
-}
-
-oxford <- function(x, last = "and") {
-  fmt_asis_collapse(x, n_elm_max = Inf, n_chr_max = Inf, last = last)
-}
+# cli --------------------------------------------------------------------------
 
 format_styled <- function(
   ...,
@@ -44,15 +12,13 @@ format_styled <- function(
   )
 }
 
-# Borrowed from {cli} with thanks:
+# Borrowed with thanks from {cli}:
 # https://github.com/r-lib/cli/blob/9cf4733030622fbfd21468e9a6d67041c5e64a56/R/utils.R#L13
 cli_escape <- function(x) {
   x <- gsub("{", "{{", x, fixed = TRUE)
   x <- gsub("}", "}}", x, fixed = TRUE)
   x
 }
-
-# printing ---------------------------------------------------------------------
 
 cat_bullets <- function(x) {
   # TODO: `cli::format_bullets_raw` performs substitution (still) on
@@ -76,6 +42,34 @@ cli_bullets_unescape <- function(x) {
 }
 
 # formatters -------------------------------------------------------------------
+
+oxford <- function(x, last = " and ") {
+  fmt_asis_collapse(x, n_elm_max = Inf, n_chr_max = Inf, last = last)
+}
+
+commas <- function(x) {
+  paste(x, collapse = ", ")
+}
+
+backtick <- function(x) {
+  paste0("`", x, "`")
+}
+
+untick <- function(x) {
+  gsub("`+$", "", gsub("^`+", "", x))
+}
+
+chr_encode <- function(x, quote = '"') {
+  encodeString(x, quote = quote)
+}
+
+str_upper1 <- function(x) {
+  paste0(toupper(substr(x, 1, 1)), substr(x, 2, nchar(x)))
+}
+
+str_lower1 <- function(x) {
+  paste0(tolower(substr(x, 1, 1)), substr(x, 2, nchar(x)))
+}
 
 fmt_vec_string <- function(vec, n_elm_max = 5L, n_chr_max = 50L) {
   has_literals <- function(x) is.numeric(x) || is.logical(x) || is.character(x)
@@ -123,13 +117,13 @@ fmt_asis_collapse <- function(
   }
 
   # Everything fits
-  collapsed <- collapse(x, sep = sep)
+  collapsed <- paste(x, collapse = sep)
   if (n <= n_elm_max && nchar(collapsed) + nchar(last %||% "") <= n_chr_max) {
     if (!is.null(last) && n >= 2L) {
       head <- x[seq_len(n - 1L)]
       tail <- x[[n]]
-      last_sep <- if (n == 2L) last else paste0(sep, last)
-      return(paste0(collapse(head, sep = sep), last_sep, tail))
+      last_sep <- if (n == 2L) last else gsub("\\s+", " ", paste0(sep, last))
+      return(paste0(paste(head, collapse = sep), last_sep, tail))
     }
     return(collapsed)
   }
@@ -141,12 +135,12 @@ fmt_asis_collapse <- function(
   head_n <- max(which(nchar(tail) + cumsum(nchar(head)) <= n_chr_max))
   if (head_n > 0) {
     head <- x[seq_len(head_n)]
-    return(collapse(c(head, "...", tail), sep = sep))
+    return(paste(c(head, "...", tail), collapse = sep))
   }
 
   # Still too long: just head, ...
   head <- x[[1L]]
-  collapsed <- collapse(c(head, "..."), sep = sep)
+  collapsed <- paste(c(head, "..."), collapse = sep)
   if (nchar(collapsed) <= n_chr_max) {
     return(collapsed)
   }
@@ -154,7 +148,7 @@ fmt_asis_collapse <- function(
   # Still too long: truncate the first element itself
   n_max <- max(n_chr_max - nchar(sep) - 3L, 1L)
   truncated <- chr_trunc(head, n_max = n_max)
-  collapse(c(truncated, "..."), sep = sep)
+  paste(c(truncated, "..."), collapse = sep)
 }
 
 fmt_at_locs <- function(where, place = c("location", "row")) {
@@ -168,29 +162,12 @@ fmt_at_locs <- function(where, place = c("location", "row")) {
   }
 
   n <- length(where)
-  where <- fmt_vec(where)
   if (n == 1L) {
     glue::glue("at {place} {fmt_vec_string(where)}")
   } else if (n <= 5) {
     glue::glue("at {places} {fmt_vec_string(where)}")
   } else {
     glue::glue("at {places} {fmt_vec_string(where)} and {n - 5} more")
-  }
-}
-
-fmt_locs <- function(where) {
-  if (is.logical(where)) {
-    where <- which(where)
-  }
-  if (rlang::is_empty(where)) {
-    return(backtick("c()"))
-  }
-
-  n <- length(where)
-  if (n <= 5) {
-    fmt_vec_string(where)
-  } else {
-    glue::glue("{fmt_vec_string(where))} and {n - 5} more")
   }
 }
 
@@ -209,4 +186,16 @@ fmt_vec <- function(vec) {
   } else {
     format(vec, trim = TRUE)
   }
+}
+
+chr_trunc <- function(x, n_max, tail = "...") {
+  n_max <- n_max
+  too_long <- nchar(x) > (n_max + nchar(tail))
+  x[too_long] <- paste0(substr(x[too_long], 0, pmin(nchar(x[too_long]), n_max)), tail)
+  x
+}
+
+str_to_title <- function(x) {
+  s <- strsplit(x, " ")[[1]]
+  paste(toupper(substring(s, 1, 1)), substring(s, 2), sep = "", collapse = " ")
 }

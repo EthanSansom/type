@@ -1,33 +1,38 @@
-# TODO: We'll need to revise the context in which these are allowed to run.
-#       Also, if we don't allow parameters, we can just store these as strings.
-#
-# E.g. `optional(t_bool) %:% x(TRUE)` should fail, as `optional()` is allowed
-# only in a function typing context.
+# modifiers --------------------------------------------------------------------
 
+# TODO: Document
+#' @export
 const <- function(type) {
-  new_refined_type(type, modifications = "const")
+  context_assert("%:%", format_styled("Must be used in object typing, e.g. within {.code %:%}."))
+  type |> add_modification("const")
 }
 
-unsafe <- function(type) {
-  new_refined_type(type, modifications = "unsafe")
-}
-
+# TODO: Document
+#' @export
 optional <- function(type) {
-  new_refined_type(type, modifications = "optional")
+  context_assert("typed", format_styled("Must be used in function typing, e.g. within {.fn typed}."))
+  type |> add_modification("optional")
 }
 
+# TODO: Document
+#' @export
 maybe <- function(type) {
-  new_refined_type(type, modifications = "maybe")
+  context_assert("typed", format_styled("Must be used in function typing, e.g. within {.fn typed}."))
+  type |> add_modification("maybe")
 }
 
-expred <- function(type) {
-  new_refined_type(type, modifications = "expred")
+# This is an internal only modification for the `...` argument of functions
+endotted <- function(type) {
+  type |> add_modification("endotted")
 }
 
-quoted <- function(type) {
-  new_refined_type(type, modifications = "quoted")
+# helpers ----------------------------------------------------------------------
+
+add_modification <- function(type, modification) {
+  type@modifications <- c(type@modifications, modification)
+  type
 }
 
 has_modifications <- function(type) {
-  is_refined_type(type) && !rlang::is_empty(type@modifications)
+  !rlang::is_empty(type@modifications)
 }

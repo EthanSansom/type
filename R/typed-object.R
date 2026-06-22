@@ -1,12 +1,14 @@
+# todos ------------------------------------------------------------------------
+
+# TODO: last_type()
+# - Cache the last failed type on a failure, so user can run `last_type()` to see it.
+
 # operators --------------------------------------------------------------------
 
-# TODO: Give a hint for type declarations which look like constructors:
-#
-# Error in `t_point %:% c(x = 1L, y = 2L)`:
-# ! Attempted to assign 2 initial values to `c`.
-# i Typed object declarations require exactly one initial value, e.g. `c(<value>)`.
-
+# TODO: Document
+#' @export
 `%:%` <- function(type, declaration) {
+  context_local("%:%")
   if (!is_type(type)) {
     abort_bad_input(format_styled(
       "The left-hand side of {.code %:%} must be a type, ",
@@ -20,27 +22,22 @@
   name <- declared$name
   value <- declared$value
 
-  validation_result <- type_validate(type, value, "<value>")
-  if (!is.null(validation_result)) {
-    value <- rlang::as_label(decl_expr[[2]])
-    abort_mistyped(
-      message = c(
+  if (!type_test(type, value)) {
+    value_label <- rlang::as_label(decl_expr[[2]])
+    rlang::abort(
+      c(
         format_styled(
-          "Attempted to initialize {.code {name}} with a mistyped value: {.code {value}}."
+          "Attempted to initialize {.code {name}} with a mistyped value: {.code {value_label}}."
         ),
-        validation_result
-      )
+        type_diagnose(type, value, "<result>")
+      ),
+      class = c("type_error_mistyped_obj", "type_error_mistyped", "type_error"),
+      call = parent_frame
     )
   }
 
-  is_const <- FALSE
-  if (has_modifications(type)) {
-    mods <- type@modifications
-    is_const <- "const" %in% mods
-    warn_if_non_const_mods(mods, name)
-  }
-
-  if (is_const) {
+  if ("const" %in%  type@modifications) {
+    abort_call <- 
     binding_fun <- eval(rlang::expr(
       local(
         {
@@ -50,9 +47,10 @@
             if (missing(x)) {
               return(VALUE)
             }
-            type::abort_mistyped(
-              format_styled("Can't assign to the constant {.arg {NAME}}."),
-              error_call = !!parent_frame
+            rlang::abort(
+              glue::glue("Can't assign to the constant `{NAME}`."),
+              class = c("type_error_obj_mistyped", "type_error_mistyped", "type_error"),
+              call = !!parent_frame
             )
           }
           class(out) <- c(
@@ -68,11 +66,12 @@
       )
     ))
   } else {
-    validate_expr <- type_validate_expr(
-      type = type,
-      obj_sym = rlang::sym("x"),
+    validate_expr <- rlang::call2(
+      "inline_obj_type_validate",
+      obj = rlang::sym("x"),
       obj_name = "<value>",
-      env = parent_frame
+      type = type,
+      .ns = "type"
     )
     binding_fun <- eval(rlang::expr(
       local(
@@ -88,11 +87,9 @@
               VALUE <<- x
               return(VALUE)
             }
-            type::abort_mistyped(
+            rlang::abort(
               c(
-                format_styled(
-                  "Attempted to assign a mistyped value to {.arg {NAME}}."
-                ),
+                glue::glue("Attempted to assign a mistyped value to `{NAME}`."),
                 validation_result
               ),
               error_call = !!parent_frame
@@ -115,6 +112,18 @@
   makeActiveBinding(name, binding_fun, parent_frame)
 
   return(invisible(value))
+}
+
+# inlined ----------------------------------------------------------------------
+
+# TODO: Document
+#' @export
+inline_obj_type_validate <- function(obj, obj_name, type) {
+  for (trait in type@traits) {
+    if (!rlang::is_true(trait_test(trait, obj))) {
+      return(trait_diagnose(trait, obj, obj_name))
+    }
+  }
 }
 
 # helpers ----------------------------------------------------------------------
@@ -209,27 +218,5 @@ parse_declaration <- function(
 
   abort_internal(
     format_styled("Invalid declaration was unhandled: {.code <<expr_label>>}.")
-  )
-}
-
-warn_if_non_const_mods <- function(mods, obj_name) {
-  non_const_mods <- mods[mods != "const"]
-  if (rlang::is_empty(non_const_mods)) {
-    return(invisible())
-  }
-
-  non_const_mods <- backtick(paste0(non_const_mods, "()"))
-  n <- length(non_const_mods)
-  rlang::warn(
-    message = c(
-      format_styled(
-        "{qty(n)}Removing the <<oxford(non_const_mods)>> modifier{?s} ",
-        "from the type of {.arg {obj_name}}."
-      ),
-      i = format_styled(
-        "{qty(n)}The <<oxford(non_const_mods)>> modifier{?s} ",
-        "{?applies/apply} only in function-typing contexts."
-      )
-    )
   )
 }
