@@ -49,7 +49,7 @@
             }
             rlang::abort(
               glue::glue("Can't assign to the constant `{NAME}`."),
-              class = c("type_error_obj_mistyped", "type_error_mistyped", "type_error"),
+              class = c("type_error_mistyped_obj", "type_error_mistyped", "type_error"),
               call = !!parent_frame
             )
           }
@@ -156,7 +156,7 @@ parse_declaration <- function(
     abort_bad_input(
       message = c(
         format_styled(
-          "The right-hand-side of {.fn `%:%`} must be a declaration, not the symbol {.code {expr_label}}."
+          "The right-hand-side of {.code %:%} must be a declaration, not the symbol {.code {expr_label}}."
         ),
         i = format_styled(
           "Use {.code <<expr_label>>(value)} to declare the value of {.code {expr_label}}."
@@ -174,7 +174,7 @@ parse_declaration <- function(
     abort_bad_input(
       message = c(
         format_styled(
-          "The right-hand side of {.fn `%:%`} must be a declaration ",
+          "The right-hand side of {.code %:%} must be a declaration ",
           "of the form {.code name(value)}."
         ),
         x = format_styled("A <<kind>> {.code {expr_label}} was supplied.")

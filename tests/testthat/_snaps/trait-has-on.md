@@ -31,3 +31,28 @@
       Object `list(x = 1)` does not have the expected type.
       x `names(list(x = 1))` must be size 2, not size 1.
 
+---
+
+    Code
+      obj_inspect_type(list(x = TRUE, y = "A"), t3)
+    Output
+      Object `list(x = TRUE, y = "A")` does not have the expected type.
+      x `list(x = TRUE, y = "A")[["y"]]` must be a bare <logical>, not a bare
+        <character>.
+
+---
+
+    Code
+      obj_inspect_type(list("A"), t3)
+    Output
+      Object `list("A")` does not have the expected type.
+      x `list("A")[[1]]` must be a bare <logical>, not a bare <character>.
+
+---
+
+    Code
+      obj_inspect_type(list(TRUE), t3)
+    Output
+      Object `list(TRUE)` has the expected type.
+      v Every element of `list(TRUE)` is a bare <logical>.
+

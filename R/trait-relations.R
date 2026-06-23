@@ -59,14 +59,14 @@ same_classed_elms <- function(..., error_call = rlang::caller_env()) {
   selectors <- flatten_selectors(list(...), error_call = error_call)
   if (length(selectors) == 0L) {
     abort_bad_input(
-      "Must supply at least one selector to {.arg ...}.",
+      format_styled("Must supply at least one selector to {.arg ...}."),
       error_call = error_call
     )
   }
   new_elms_relation(same_classed_trait(selectors = selectors))
 }
 
-same_classed_args <- function(..., error_call = caller_env()) {
+same_classed_args <- function(..., error_call = rlang::caller_env()) {
   dots <- rlang::enexprs(...)
   check_relation_dots(dots, error_call = error_call)
   args <- as.character(dots)
@@ -173,14 +173,14 @@ same_sized_elms <- function(..., error_call = rlang::caller_env()) {
   selectors <- flatten_selectors(list(...), error_call = error_call)
   if (length(selectors) == 0L) {
     abort_bad_input(
-      "Must supply at least one selector to {.arg ...}.",
+      format_styled("Must supply at least one selector to {.arg ...}."),
       error_call = error_call
     )
   }
   new_elms_relation(same_sized_trait(selectors = selectors))
 }
 
-same_sized_args <- function(..., error_call = caller_env()) {
+same_sized_args <- function(..., error_call = rlang::caller_env()) {
   dots <- rlang::enexprs(...)
   check_relation_dots(dots, error_call = error_call)
   args <- as.character(dots)
@@ -315,7 +315,7 @@ on_obj_labels <- function(obj, obj_name, selectors) {
 check_relation_dots <- function(dots, error_call = caller_env()) {
   if (rlang::is_empty(dots)) {
     abort_bad_input(
-      "Must supply at least one argument to {.arg ...}.",
+      format_styled("Must supply at least one argument to {.arg ...}."),
       error_call = error_call
     )
   }

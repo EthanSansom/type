@@ -90,6 +90,23 @@ test_that("on_attr() type tests and checks work as expected", {
   expect_error(obj_assert_type(1:4, t), class = "type_error_mistyped_obj")
 })
 
+# on_each ----------------------------------------------------------------------
+
+test_that("on_each() errors when used in invalid contexts", {
+  expect_error(on_each(), class = "type_error_bad_input")
+})
+
+test_that("on_each() type tests and checks work as expected", {
+  t <- t_any |> has(on_each(), t_int)
+ 
+  expect_true(obj_is_type(list(), t))
+  expect_true(obj_is_type(list(1L, 2L, 3L), t))
+  expect_true(obj_is_type(1:5, t))
+  expect_false(obj_is_type(list(1L, "A"), t))
+  expect_no_error(obj_assert_type(list(1L, 2L, 3L), t))
+  expect_error(obj_assert_type(list(1L, "A"), t), class = "type_error_mistyped_obj")
+})
+
 # has --------------------------------------------------------------------------
 
 test_that("has() errors on invalid inputs", {
@@ -120,8 +137,12 @@ test_that("has() chained traits are both checked", {
 test_that("has() description and diagnosis are as expected", {
   t1 <- t_any |> has(on_elm(1L), t_int)
   t2 <- t_any |> has(on(names), t_chr |> sized(2L))
+  t3 <- t_any |> has(on_each(), t_lgl)
   expect_snapshot(obj_inspect_type(list(x = 10L), t1))
   expect_snapshot(obj_inspect_type(mean, t1))
   expect_snapshot(obj_inspect_type(list(x = 1, y = 2), t2))
   expect_snapshot(obj_inspect_type(list(x = 1), t2))
+  expect_snapshot(obj_inspect_type(list(x = TRUE, y = "A"), t3))
+  expect_snapshot(obj_inspect_type(list("A"), t3))
+  expect_snapshot(obj_inspect_type(list(TRUE), t3))
 })
