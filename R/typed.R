@@ -1,6 +1,101 @@
 # typed ------------------------------------------------------------------------
 
-# TODO: Document
+#' Declare a type-checked function
+#'
+#' @description
+#' `typed()` inserts argument and (optionally) return type validation into
+#' a function. When printed, a typed function shows the types of its arguments
+#' and return value.
+#'
+#' @section Argument Typing:
+#' 
+#' A typed function's arguments may be annotated with any valid type, e.g.
+#' [t_int], including types refined with additional traits, e.g. [sized()].
+#'
+#' ```r
+#' f <- typed(function(x = t_int, y = t_chr |> sized(1L)) { paste(x, y) })
+#' f(1L, "a")         # ok
+#' f(TRUE, "a")       # error, `x` is not an integer
+#' f(1L, c("a", "b")) # error, `y` is not a size 1
+#' ```
+#' 
+#' By default, annotated function arguments have no default value. To set one,
+#' use the syntax `arg = <type> %:% <default>`.
+#'
+#' ```r
+#' f <- typed(function(x = t_int %:% 0L) { x })
+#' f()    # 0L
+#' f(1L)  # 1L
+#' ```
+#' 
+#' Dots (`...`) may also be type annotated. By default, each dot will be checked
+#' against the supplied type. To treat the dots as a single argument, e.g. as
+#' a list, use the [t_dots] annotation.
+#' 
+#' ```r
+#' # Each `...` must be an integer
+#' f <- typed(function(... = t_int) list(...))
+#' 
+#' # Exactly 2 dots must be supplied
+#' g <- typed(function(... = t_dots |> sized(2L)) list(...))
+#' ```
+#' 
+#' Arguments, with the exception of `...`, may be modified using [optional()]
+#' or [maybe()]. [optional()] arguments may by unsupplied while [maybe()]
+#' arguments may be `NULL`.
+#' 
+#' ```r
+#' # `x` is an integer or is unsupplied
+#' f <- typed(function(x = optional(t_int)) if (missing(x)) 0L else x)
+#' 
+#' # `x` is an integer or `NULL`
+#' g <- typed(function(x = maybe(t_int)) x)
+#' ```
+#' 
+#' @section Relations:
+#' 
+#' Relations, e.g. [same_sized()], declare between-argument checks. A relation
+#' call may be placed before or after the function definition.
+#'
+#' ```r
+#' # `x` and `y` must be integers of the same size
+#' f <- typed(
+#'   same_sized(x, y), 
+#'   function(x = t_int, y = t_int) x + y
+#' )
+#' ```
+#' 
+#' @section Return Typing:
+#'
+#' Use the `returns` argument to enforce a type on the return value. Return
+#' types cannot be modified using [optional()] or [maybe()].
+#'
+#' ```r
+#' f <- typed(
+#'   function(x = t_bool) if (x) "yes" else "no", 
+#'   returns = t_chr
+#' )
+#' ```
+#'
+#' @param ... 
+#' 
+#' A type annotated function definition, optionally accompanied by one or more
+#' relation calls (e.g. [same_sized()]). Exactly one function definition must
+#' be supplied.
+#' 
+#' @param returns 
+#' 
+#' A type for the function's return value. By default `returns` is `NULL`,
+#' meaning the return value can have any type.
+#'
+#' @return A typed function.
+#'
+#' @seealso [optional()] and [maybe()] for argument modifications, [same_sized()] and [same_classed()] for between-argument constraints.
+#'
+#' @examples
+#' # TODO: Examples
+#' f <- typed(function(x) { x })
+#' 
 #' @export
 typed <- function(..., returns = NULL) {
   context_local("typed")
@@ -310,7 +405,34 @@ insert_returns_type <- function(body, returns_type) {
 
 # assert -----------------------------------------------------------------------
 
-# TODO: Document
+#nocov start
+
+#' Inlined helper functions
+#' 
+#' @description
+#' 
+#' These functions are inserted into [typed()] functions and are not meant
+#' for external use. They are exported only to ensure that [typed()] functions
+#' call the correct helper, e.g. `type::inline_result_assert_type()`, and
+#' not a globally defined function, e.g. `inline_result_assert_type()`.
+#' 
+#' @param type,.type A type.
+#' @param value A value to be checked.
+#' @param arg An argument to be checked.
+#' @param arg_name An argument name to use in error messages.
+#' @param obj An object to be checked.
+#' @param obj_name An object name to use in error messages.
+#' @param error_call,.error_call The call to use in error messages.
+#' @param ... Dots to be checked individually.
+#' @param dots A list of dots to be checked.
+#'
+#' @name inlined-functions
+#' 
+#' @examples
+#' try(inline_result_assert_type(10L, t_chr))
+NULL
+
+#' @rdname inlined-functions
 #' @export
 inline_arg_assert_type <- function(
   arg, 
@@ -333,7 +455,7 @@ inline_arg_assert_type <- function(
   return(invisible())
 }
 
-# TODO: Document
+#' @rdname inlined-functions
 #' @export
 inline_result_assert_type <- function(
   value, 
@@ -355,7 +477,7 @@ inline_result_assert_type <- function(
   value
 }
 
-# TODO: Document
+#' @rdname inlined-functions
 #' @export
 inline_dots_assert_type <- function(
   ...,
@@ -372,7 +494,7 @@ inline_dots_assert_type <- function(
   }
 }
 
-# TODO: Document
+#' @rdname inlined-functions
 #' @export
 inline_dotlist_assert_type <- function(
   dots,
@@ -386,6 +508,8 @@ inline_dotlist_assert_type <- function(
     error_call = error_call
   )
 }
+
+#nocov end
 
 # methods ----------------------------------------------------------------------
 

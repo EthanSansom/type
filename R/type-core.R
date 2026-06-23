@@ -15,6 +15,9 @@ t_bool <- NULL
 t_int <- NULL
 
 #' @export
+t_dbl <- NULL
+
+#' @export
 t_chr <- NULL
 
 #' @export
@@ -30,6 +33,8 @@ on_load_core_types <- function() {
   t_bool <<- t_lgl |> sized(1L)
 
   t_int <<- t_any |> bare_typed("integer")
+
+  t_dbl <<- t_any |> bare_typed("double")
 
   t_chr <<- t_any |> bare_typed("character")
 

@@ -1,6 +1,50 @@
 # has --------------------------------------------------------------------------
 
-# TODO: Document
+#' Add an element or attribute constraint to a type
+#'
+#' @description
+#'
+#' `has()` returns a copy of `type` that requires a selected part of an object 
+#' to have type `on_type`. The part is identified by a selector (see [on()]).
+#'
+#' ```r
+#' # Require that element `[[1]]` is an integer
+#' t_any |> has(on_elm(1L), t_int)
+#'
+#' # Require that the "dim" attribute is an integer vector of size 2
+#' t_any |> has(on_attr("dim"), t_int |> sized(2L))
+#' 
+#' # Require that names contains "x"
+#' t_any |> has(on(names), t_chr |> contains("x"))
+#' ```
+#'
+#' Constraints can be composed with the pipe operator `|>`:
+#'
+#' ```r
+#' t_coords <- t_list |>
+#'   has(on_elm("lat"), t_dbl |> bounded(-90, 90)) |>
+#'   has(on_elm("lon"), t_dbl |> bounded(-180, 180))
+#' ```
+#'
+#' @param type 
+#' 
+#' A type.
+#' 
+#' @param selector 
+#' 
+#' A selector, e.g. the result of [on()], [on_elm()], or [on_attr()].
+#' 
+#' @param on_type 
+#' 
+#' A type to check the selected value against.
+#'
+#' @returns A copy of `type` with an additional element or attributeconstraint.
+#'
+#' @seealso [on()] for available selectors, [has_relation()] to add between-element constraints.
+#'
+#' @examples
+#' # TODO
+#' 
 #' @export
 has <- function(type, selector, on_type) {
   context_local("has")

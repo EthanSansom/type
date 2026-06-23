@@ -5,7 +5,58 @@
 
 # operators --------------------------------------------------------------------
 
-# TODO: Document
+#' Declare a typed object
+#'
+#' @description
+#' 
+#' `%:%` declares a typed variable in the calling environment. The right-hand
+#' side must be a declaration of the form `name(value)`, where `name` is the
+#' variable to create and `value` is its initial value:
+#'
+#' ```r
+#' t_int %:% x(1L)
+#' x        # 1L
+#' x <- 2L  # ok
+#' x <- "A" # error, "A" is not an integer
+#' ```
+#'
+#' A typed variable behaves like a regular object, but is type checked on
+#' every assignment. A constant variable may be declared using [const()], 
+#' in which case the variable cannot be modified.
+#'
+#' ```r
+#' const(t_int) %:% x(1L)
+#' x <- 2L # error, can't assign to a constant
+#' ```
+#'
+#' @param type
+#' 
+#' A type, optionally wrapped in [const()].
+#' 
+#' @param declaration 
+#' 
+#' A declaration of the form `name(value)`. `name` becomes
+#' the variable name and `value` is used as the variable's initial
+#' value.
+#'
+#' @return The initial value, invisibly.
+#'
+#' @seealso Modifier [const()], [typed()] for type-checking functions.
+#'
+#' @examples
+#' t_chr |> sized(1L) %:% x("hello")
+#' const(t_bool) %:% y(TRUE)
+#' 
+#' # `x` must be a scalar character
+#' x <- "goodbye"
+#' try(x <- 10)
+#' 
+#' # `y` can't be assigned to
+#' try(y <- FALSE)
+#' 
+#' # Typed variables can be re-declared as a different type
+#' t_chr %:% y("true")
+#' 
 #' @export
 `%:%` <- function(type, declaration) {
   context_local("%:%")
@@ -116,7 +167,9 @@
 
 # inlined ----------------------------------------------------------------------
 
-# TODO: Document
+#nocov start
+
+#' @rdname inlined-functions
 #' @export
 inline_obj_type_validate <- function(obj, obj_name, type) {
   for (trait in type@traits) {
@@ -126,7 +179,11 @@ inline_obj_type_validate <- function(obj, obj_name, type) {
   }
 }
 
+#nocov end
+
 # helpers ----------------------------------------------------------------------
+
+#nocov start
 
 parse_declaration <- function(
   decl_expr,
@@ -220,3 +277,5 @@ parse_declaration <- function(
     format_styled("Invalid declaration was unhandled: {.code <<expr_label>>}.")
   )
 }
+
+#nocov end

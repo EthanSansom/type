@@ -215,6 +215,51 @@ assert_is_chr <- function(
   )
 }
 
+assert_is_simple_vector <- function(
+  x,
+  maybe = FALSE,
+  x_name = rlang::caller_arg(x),
+  error_call = rlang::caller_env()
+) {
+  if ((maybe && is.null(x)) || vctrs::obj_is_vector(x) && !is.list(x)) {
+    return(invisible())
+  }
+
+  abort_bad_input(
+    format_styled(
+      "{.arg {x_name}} must be a non-data.frame, non-list vector, ",
+      "not <<fmt_r_type(x)>>."
+    ),
+    error_call = error_call
+  )
+}
+
+assert_is_size <- function(
+  x,
+  size,
+  x_name = rlang::caller_arg(x),
+  error_call = rlang::caller_env()
+) {
+  if (!vctrs::obj_is_vector(x)) {
+    abort_bad_input(
+      format_styled("{.arg {x_name}} must be a vector, not <<fmt_r_type(x)>>."),
+      error_call = error_call
+    )
+  }
+
+  if (vctrs::vec_size(x) == size) {
+    return(invisible())
+  }
+
+  abort_bad_input(
+    c(
+      format_styled("{.arg {x_name}} must be size {size}."),
+      x = format_styled("{.arg {x_name}} is size {vctrs::vec_size(x)}.")
+    ),
+    error_call = error_call
+  )
+}
+
 assert_match <- function(
   x,
   match,

@@ -7,13 +7,66 @@ type <- S7::new_class(
   )
 )
 
-# TODO: Document
+#' Test if an object is a type
+#'
+#' @param x An object to test.
+#' @return `TRUE` if `x` is a type, `FALSE` otherwise.
+#' 
+#' @examples
+#' is_type(10L)
+#' is_type(t_int)
+#' 
 #' @export
 is_type <- function(x) {
   S7::S7_inherits(x, type)
 }
 
-# TODO: Document
+#' Check an object against a type
+#'
+#' @description
+#' These functions are used to investiage whether an object `obj` has a type `type`.
+#'
+#' - `obj_is_type(obj, type)` returns `TRUE` if `obj` has type `type` and `FALSE` otherwise.
+#' - `obj_inspect_type(obj, type)` prints a success or failure message for each type check run on `obj` then returns `NULL` invisibly.
+#' - `obj_assert_type(obj, type)` raises a `<type_error_mistyped_obj>` error if `obj` is mistyped and returns `NULL` invisibly otherwise.
+#'
+#' @param obj
+#' 
+#' An object to check.
+#' 
+#' @param type 
+#' 
+#' A type to check against.
+#' 
+#' @param obj_name 
+#' 
+#' The name of `obj`, used in messages. Defaults to the expression passed to `obj`.
+#'
+#' @return
+#' - `obj_is_type()`: `TRUE` if `obj` is the correct type, `FALSE` otherwise.
+#' - `obj_inspect_type()`: `NULL` invisibly, called for its side effect.
+#' - `obj_assert_type()`: `NULL` invisibly if `obj` is the correct type, otherwise raises an error.
+#'
+#' @examples
+#' good <- TRUE
+#' bad <- NA
+#' 
+#' # Test whether an object is a boolean
+#' obj_is_type(good, t_bool)
+#' obj_is_type(bad, t_bool)
+#'
+#' # Print the type tests run on the object
+#' obj_inspect_type(good, t_bool)
+#' obj_inspect_type(bad, t_bool)
+#'
+#' # Raise an error if the object is not a boolean
+#' obj_assert_type(good, t_bool)
+#' try(obj_assert_type(bad, t_bool))
+#'
+#' @name obj-type
+NULL
+
+#' @rdname obj-type
 #' @export
 obj_is_type <- function(obj, type) {
   assert_is_type(type)
@@ -24,7 +77,7 @@ obj_is_type <- function(obj, type) {
   TRUE
 }
 
-# TODO: Document
+#' @rdname obj-type
 #' @export
 obj_inspect_type <- function(
   obj,
@@ -49,7 +102,7 @@ obj_inspect_type <- function(
   invisible()
 }
 
-# TODO: Document
+#' @rdname obj-type
 #' @export
 obj_assert_type <- function(
   obj,

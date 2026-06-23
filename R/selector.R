@@ -1,6 +1,121 @@
+# on ---------------------------------------------------------------------------
+
+#' Select an element or attribute to type
+#'
+#' @description
+#' 
+#' Selectors identify a part of an object for use in [has()] and relation
+#' functions such as [same_sized()] and [same_classed()]. 
+#' 
+#' These are useful for typing elements of a container type, such as a list. For
+#' example, the following defines a coordinate type `t_coords`, which is a list
+#' containing named numeric elements `"lat"` and `"lon"` of the same size:
+#'
+#' ```r
+#' t_coords <- t_list |>
+#'   has(on_elm("lat"), t_dbl |> bounded(-90, 90)) |>
+#'   has(on_elm("lon"), t_dbl |> bounded(-180, 180)) |>
+#'   has_relation(same_sized(on_elm("lat"), on_elm("lon")))
+#' ```
+#'
+#' `on()` specifies an `accessor` function, either a call or a function name, 
+#' applied to an object during type checking. If `accessor` is a call, `.x`
+#' may be used as a placeholder for the object.
+#'
+#' ```r
+#' # Require an object's length to be between 1 and 10 (inclusive)
+#' t_any |> has(on(length(.x)), t_int |> bounded(1L, 10L))
+#' 
+#' # Require an object's names to contain "x" and "y"
+#' # Equivilant to `on(names(.x))`
+#' t_any |> has(on(names), t_chr |> contains(c("x", "y")))
+#' ```
+#' 
+#' `on_elm(index)` and `on_attr(name)` are convenience selectors for the
+#' common cases of `on(.x[[index]])` and `on(attr(.x, name))`.
+#'
+#' ```r
+#' has(t_any, on_elm(1L), t_int)     # same as `on(.x[[1L]])`
+#' has(t_any, on_attr("dim"), t_int) # same as `on(attr(.x, "dim"))`
+#' ```
+#' 
+#' `on_data()` selects the underlying data of an object after it's attributes 
+#' and class has been removed (via [unclass()]).
+#' 
+#' ```r
+#' # POSIXct datetime vectors store time as a double
+#' t_posixct <- t_any |>
+#'   classed("POSIXct") |>
+#'   has(on_data(), t_dbl) |>
+#'   has(on_attr("tzone"), t_chr |> sized(1L))
+#' ```
+#'
+#' `on_each()` selects all elements of an object, applying the type check to
+#' each one individually.
+#' 
+#' ```r
+#' # Defines a list-of-integers type
+#' t_list_of_int <- t_list |> has(on_each(), t_int)
+#' ```
+#'
+#' @param accessor 
+#' 
+#' A call using `.x` as the object placeholder, or a bare symbol `f` as 
+#' shorthand for `f(.x)`.
+#' 
+#' @param index 
+#' 
+#' For `on_elm()`, a single position (integer) or name (character).
+#' 
+#' @param name 
+#' 
+#' For `on_attr()`, a single attribute name (character).
+#' 
+#' @returns
+#' 
+#' A selector. These functions may only be used within [has()] and relations
+#' such as [same_sized()] and [same_classed()]. Outside of these contexts, the
+#' `on()` functions raise an error. 
+#'
+#' @seealso [has()] to attach a selector to a type, [on_elms()] and [on_attrs()] for multi-selector equivalents.
+#' 
+#' @examples
+#' # TODO: Examples
+#'
+#' @export
+on <- function(accessor) {
+  selector_context_assert()
+  parent_frame <- rlang::caller_env()
+  accessor_expr <- rlang::enexpr(accessor)
+  if (!rlang::is_call_simple(accessor_expr) && !rlang::is_symbol(accessor_expr)) {
+    abort_bad_input(
+      format_styled("{.arg accessor} must be a simple call or a symbol."),
+      error_call = parent_frame
+    )
+  }
+  if (rlang::is_symbol(accessor_expr) && !identical(accessor_expr, quote(.x))) {
+    accessor_expr <- rlang::call2(accessor_expr, quote(.x))
+  }
+
+  accessor_label <- rlang::as_label(accessor_expr)
+  accessor <- rlang::new_function(
+    args = rlang::pairlist2(.x = ),
+    body = accessor_expr,
+    env = parent_frame
+  )
+
+  selector(
+    accessor = accessor,
+    labeller = \(obj_name, value) {
+      backtick(gsub(".x", obj_name, accessor_label, fixed = TRUE))
+    },
+    plural = FALSE
+  )
+}
+
 # named selectors --------------------------------------------------------------
 
-# TODO: Document
+#' @rdname on
 #' @export
 on_attr <- function(name) {
   selector_context_assert()
@@ -17,7 +132,7 @@ on_attr_impl <- function(name) {
   )
 }
 
-# TODO: Document
+#' @rdname on
 #' @export
 on_elm <- function(index) {
   selector_context_assert()
@@ -37,7 +152,22 @@ on_elm_impl <- function(index) {
   )
 }
 
-# TODO: Document
+#' @rdname on
+#' @export
+on_data <- function() {
+  selector_context_assert()
+  assert_is_index(index)
+  selector(
+    accessor = \(obj) {
+      attributes(obj) <- NULL
+      unclass(obj)
+    },
+    labeller = \(obj_name, obj) backtick(glue::glue("unclass({obj_name})")),
+    plural = FALSE
+  )
+}
+
+#' @rdname on
 #' @export
 on_each <- function() {
   selector_context_assert()
@@ -79,40 +209,6 @@ on_attrs <- function(attrs) {
   )
   assert_is_chr(attrs, complete = TRUE)
   map(attrs, on_attr_impl)
-}
-
-# on ---------------------------------------------------------------------------
-
-# TODO: Document
-#' @export
-on <- function(accessor) {
-  selector_context_assert()
-  parent_frame <- rlang::caller_env()
-  accessor_expr <- rlang::enexpr(accessor)
-  if (!rlang::is_call_simple(accessor_expr) && !rlang::is_symbol(accessor_expr)) {
-    abort_bad_input(
-      format_styled("{.arg accessor} must be a simple call or a symbol."),
-      error_call = parent_frame
-    )
-  }
-  if (rlang::is_symbol(accessor_expr) && !identical(accessor_expr, quote(.x))) {
-    accessor_expr <- rlang::call2(accessor_expr, quote(.x))
-  }
-
-  accessor_label <- rlang::as_label(accessor_expr)
-  accessor <- rlang::new_function(
-    args = rlang::pairlist2(.x = ),
-    body = accessor_expr,
-    env = parent_frame
-  )
-
-  selector(
-    accessor = accessor,
-    labeller = \(obj_name, value) {
-      backtick(gsub(".x", obj_name, accessor_label, fixed = TRUE))
-    },
-    plural = FALSE
-  )
 }
 
 # selector class ---------------------------------------------------------------

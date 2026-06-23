@@ -27,7 +27,49 @@ new_args_relation <- function(call, args, description) {
   )
 }
 
-# TODO: Document
+#' Add a between-element constraint to a type
+#'
+#' @description
+#'
+#' `has_relation()` returns a copy of `type` that requires a relationship to 
+#' hold between selected parts of an object. Parts are selected using selector
+#' functions (see [on]) and the relationship is expressed as a relation 
+#' (see [same_sized()], [same_classed()]).
+#'
+#' ```r
+#' # Require that elements `[[1]]` and `[[2]]` are the same size
+#' t_any |> has_relation(same_sized(on_elm(1L), on_elm(2L)))
+#'
+#' # Require that attributes "x" and "y" have the same class
+#' t_any |> has_relation(same_classed(on_attr("x"), on_attr("y")))
+#' ```
+#'
+#' `has()` and `has_relation()` can be composed:
+#'
+#' ```r
+#' t_coords <- t_list |>
+#'   has(on_elm("lat"), t_dbl |> bounded(-90, 90)) |>
+#'   has(on_elm("lon"), t_dbl |> bounded(-180, 180)) |>
+#'   has_relation(same_sized(on_elm("lat"), on_elm("lon")))
+#' ```
+#'
+#' @param type 
+#' 
+#' A type.
+#' 
+#' @param relation 
+#' 
+#' A relation, e.g. the result of [same_sized()] or [same_classed()].
+#'
+#' @returns 
+#' 
+#' A copy of `type` with an additional between-element constraint.
+#'
+#' @seealso [same_sized()] and [same_classed()] for available relations, [has()] to add per-element constraints.
+#'
+#' @examples
+#' # TODO
+#' 
 #' @export
 has_relation <- function(type, relation) {
   context_local("has_relation")
@@ -39,7 +81,37 @@ has_relation <- function(type, relation) {
 
 # same_classed -----------------------------------------------------------------
 
-# TODO: Document
+#' Require elements to have the same class
+#'
+#' @description
+#' 
+#' `same_classed()` constrains a set of values to share the same class. Its
+#' behaviour depends on context:
+#'
+#' - Inside [has_relation()]: requires that the selected elements or attributes of an object all have the same class.
+#' - Inside [typed()]: requires that the specified function arguments all have the same class at call time.
+#' 
+#' @param ...
+#' 
+#' Inside [has_relation()], one or more selectors (e.g. [on_elm()],
+#'[on_elms()], [on_attr()], [on()]).
+#' 
+#' Inside [typed()], one or more argument names.
+#'
+#' @examples
+#' # Require that elements `[[1]]` and `[[2]]` share a class
+#' t <- t_any |> has_relation(same_classed(on_elm(1L), on_elm(2L)))
+#' obj_inspect_type(list(1L, 2L), t) 
+#' obj_inspect_type(list(1L, "a"), t)
+#'
+#' # Require that arguments `x` and `y` share a class
+#' f <- typed(same_classed(x, y), function(x, y) { NULL })
+#' f(1L, 2L)
+#' try(f(1L, "a"))
+#' 
+#' @seealso [typed()] for typed function construction, [has_relation()] for
+#' adding between-element type constraints.
+#'
 #' @export
 same_classed <- function(...) {
   if (context_active("has_relation")) {
@@ -127,7 +199,7 @@ method(trait_describe, same_classed_trait) <- function(trait, obj_name) {
   format_styled("{str_upper1(oxford(descriptions))} have the same class.")
 }
 
-# TODO: Document
+#' @rdname inlined-functions
 #' @export
 inline_assert_same_classed <- function(..., error_call = rlang::caller_env()) {
   labels <- backtick(as.character(rlang::enexprs(...)))
@@ -153,7 +225,38 @@ inline_assert_same_classed <- function(..., error_call = rlang::caller_env()) {
 
 # same_sized -------------------------------------------------------------------
 
-# TODO: Document
+#' Require elements to be the same size
+#'
+#' @description
+#'
+#' `same_sized()` constrains a set of values to share the same size, checked
+#' via [vctrs::vec_size()]. Its behaviour depends on context:
+#'
+#' - Inside [has_relation()]: requires that the selected elements or attributes of an object all have the same size.
+#' - Inside [typed()]: requires that the specified function arguments all have the same size at call time.
+#'
+#' @param ...
+#'
+#' Inside [has_relation()], one or more selectors (e.g. [on_elm()],
+#' [on_elms()], [on_attr()], [on()]).
+#'
+#' Inside [typed()], one or more argument names.
+#'
+#' @examples
+#' # Require that elements `[["a"]]` and `[["b"]]` are the same size
+#' t <- t_any |> has_relation(same_sized(on_elm("a"), on_elm("b")))
+#' obj_inspect_type(list(a = 1:3, b = 1:3), t, obj_name = "obj")
+#' obj_inspect_type(list(a = 1:3, b = 1:2), t, obj_name = "obj")
+#' obj_inspect_type(list(1:2, b = 1:2), t, obj_name = "obj")
+#'
+#' # Require that arguments `x` and `y` are the same size
+#' f <- typed(same_sized(x, y), function(x = t_int, y = t_int) { NULL })
+#' f(1:3, 1:3)
+#' try(f(1:3, 1:2))
+#'
+#' @seealso [typed()] for typed function construction, [has_relation()] for
+#' adding between-element type constraints.
+#'
 #' @export
 same_sized <- function(...) {
   if (context_active("has_relation")) {
@@ -245,7 +348,7 @@ method(trait_describe, same_sized_trait) <- function(trait, obj_name) {
   format_styled("{str_upper1(oxford(descriptions))} are the same size.")
 }
 
-# TODO: Document
+#' @rdname inlined-functions
 #' @export
 inline_assert_same_sized <- function(..., error_call = rlang::caller_env()) {
   labels <- backtick(as.character(rlang::enexprs(...)))
