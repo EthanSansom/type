@@ -41,12 +41,8 @@ bare_typed <- function(type, typeof) {
     "special", "builtin", "externalptr", "weakref", "promise", "char", "bytecode"
   )
   if (typeof %notin% valid_typeof) {
-    supported_types <- fmt_vec_collapse(valid_typeof, n_elm_max = Inf, n_chr_max = Inf)
     abort_bad_input(
-      c(
-        x = format_styled("{.arg typeof} must be a valid R type, not {.val {typeof}}."),
-        i = format_styled("Supported types are: <<supported_types>>.")
-      )
+      format_styled("{.arg typeof} must be a valid R type, not {.val {typeof}}.")
     )
   }
 
