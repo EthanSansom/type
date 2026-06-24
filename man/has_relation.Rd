@@ -9,7 +9,7 @@ has_relation(type, relation)
 \arguments{
 \item{type}{A type.}
 
-\item{relation}{A relation, e.g. the result of \code{\link[=same_sized]{same_sized()}} or \code{\link[=same_classed]{same_classed()}}.}
+\item{relation}{A relation, e.g. the result of \code{\link[=same_sized]{same_sized()}}, \code{\link[=same_classed]{same_classed()}}, or \code{\link[=exclusive]{exclusive()}}.}
 }
 \value{
 A copy of \code{type} with an additional between-element constraint.
@@ -18,13 +18,16 @@ A copy of \code{type} with an additional between-element constraint.
 \code{has_relation()} returns a copy of \code{type} that requires a relationship to
 hold between selected parts of an object. Parts are selected using selector
 functions (see \link{on}) and the relationship is expressed as a relation
-(see \code{\link[=same_sized]{same_sized()}}, \code{\link[=same_classed]{same_classed()}}).
+(see \code{\link[=same_sized]{same_sized()}}, \code{\link[=same_classed]{same_classed()}}, \code{\link[=exclusive]{exclusive()}}).
 
 \if{html}{\out{<div class="sourceCode r">}}\preformatted{# Require that elements `[[1]]` and `[[2]]` are the same size
 t_any |> has_relation(same_sized(on_elm(1L), on_elm(2L)))
 
 # Require that attributes "x" and "y" have the same class
 t_any |> has_relation(same_classed(on_attr("x"), on_attr("y")))
+
+# Require that only one of attributes "x" and "y" are non-NULL
+t_any |> has_relation(exclusive(on_attrs(c("x", "y")))
 }\if{html}{\out{</div>}}
 
 \code{has()} and \code{has_relation()} can be composed:
@@ -36,9 +39,19 @@ t_any |> has_relation(same_classed(on_attr("x"), on_attr("y")))
 }\if{html}{\out{</div>}}
 }
 \examples{
-# TODO
+# Require that elements `[[1]]` and `[[2]]` are the same size
+t <- t_any |> has_relation(same_sized(on_elm(1L), on_elm(2L)))
+obj_inspect_type(list(1:3, 1:3), t)
+obj_inspect_type(list(1:3, 1:2), t)
+
+# Require that attributes "x" and "y" have the same class
+t <- t_any |> has_relation(same_classed(on_attr("x"), on_attr("y")))
+good <- structure(list(), x = 1L, y = 2L)
+bad <- structure(list(), x = 1L, y = "a")
+obj_inspect_type(good, t)
+obj_inspect_type(bad, t)
 
 }
 \seealso{
-\code{\link[=same_sized]{same_sized()}} and \code{\link[=same_classed]{same_classed()}} for available relations, \code{\link[=has]{has()}} to add per-element constraints.
+\code{\link[=has]{has()}} to add per-element constraints.
 }

@@ -4,6 +4,7 @@
 \name{inline_assert_same_classed}
 \alias{inline_assert_same_classed}
 \alias{inline_assert_same_sized}
+\alias{inline_assert_exclusive}
 \alias{inline_abort_mistyped}
 \alias{inline_obj_type_validate}
 \alias{inlined-functions}
@@ -16,6 +17,8 @@
 inline_assert_same_classed(..., error_call = rlang::caller_env())
 
 inline_assert_same_sized(..., error_call = rlang::caller_env())
+
+inline_assert_exclusive(..., error_call = rlang::caller_env())
 
 inline_abort_mistyped(
   type,

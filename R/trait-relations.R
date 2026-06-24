@@ -1,12 +1,3 @@
-# todos ------------------------------------------------------------------------
-
-# TODO:
-# - exclusive(..., .missing) -> All but one of objects must be identical to `.missing`
-#   - `.missing` may be "na", "null", or "missing", defaults to "null" for objects
-#     and `missing` for arguments
-#
-# - recyclable(...) -> Like `same_sized()`, but for recycling
-
 # relation ---------------------------------------------------------------------
 
 is_relation <- function(x) {
@@ -34,7 +25,7 @@ new_args_relation <- function(call, args, description) {
 #' `has_relation()` returns a copy of `type` that requires a relationship to 
 #' hold between selected parts of an object. Parts are selected using selector
 #' functions (see [on]) and the relationship is expressed as a relation 
-#' (see [same_sized()], [same_classed()]).
+#' (see [same_sized()], [same_classed()], [exclusive()]).
 #'
 #' ```r
 #' # Require that elements `[[1]]` and `[[2]]` are the same size
@@ -42,6 +33,9 @@ new_args_relation <- function(call, args, description) {
 #'
 #' # Require that attributes "x" and "y" have the same class
 #' t_any |> has_relation(same_classed(on_attr("x"), on_attr("y")))
+#' 
+#' # Require that only one of attributes "x" and "y" are non-NULL
+#' t_any |> has_relation(exclusive(on_attrs(c("x", "y")))
 #' ```
 #'
 #' `has()` and `has_relation()` can be composed:
@@ -59,16 +53,26 @@ new_args_relation <- function(call, args, description) {
 #' 
 #' @param relation 
 #' 
-#' A relation, e.g. the result of [same_sized()] or [same_classed()].
+#' A relation, e.g. the result of [same_sized()], [same_classed()], or [exclusive()].
 #'
 #' @returns 
 #' 
 #' A copy of `type` with an additional between-element constraint.
 #'
-#' @seealso [same_sized()] and [same_classed()] for available relations, [has()] to add per-element constraints.
+#' @seealso [has()] to add per-element constraints.
 #'
 #' @examples
-#' # TODO
+#' # Require that elements `[[1]]` and `[[2]]` are the same size
+#' t <- t_any |> has_relation(same_sized(on_elm(1L), on_elm(2L)))
+#' obj_inspect_type(list(1:3, 1:3), t)
+#' obj_inspect_type(list(1:3, 1:2), t)
+#'
+#' # Require that attributes "x" and "y" have the same class
+#' t <- t_any |> has_relation(same_classed(on_attr("x"), on_attr("y")))
+#' good <- structure(list(), x = 1L, y = 2L)
+#' bad <- structure(list(), x = 1L, y = "a")
+#' obj_inspect_type(good, t)
+#' obj_inspect_type(bad, t)
 #' 
 #' @export
 has_relation <- function(type, relation) {
@@ -376,6 +380,149 @@ inline_assert_same_sized <- function(..., error_call = rlang::caller_env()) {
       x = format_styled(
         "{labels[[1]]} is size {sizes[[1]]} and {labels[[bad_at]]} is size {sizes[[bad_at]]}."
       )
+    ),
+    error_call = error_call
+  )
+}
+
+# exlusive ---------------------------------------------------------------------
+
+#' Require exactly one element or argument to be supplied
+#'
+#' @description
+#'
+#' `exclusive()` constrains a set of values so that exactly one is non-`NULL`
+#' or non-missing. Its behaviour depends on context:
+#'
+#' - Inside [has_relation()]: requires that exactly one of the selected elements or attributes of an object is non-`NULL`.
+#' - Inside [typed()]: requires that exactly one of the function arguments is supplied.
+#' 
+#' @param ...
+#'
+#' Inside [has_relation()], one or more selectors (e.g. [on_elm()],
+#' [on_elms()], [on_attr()], [on()]).
+#'
+#' Inside [typed()], one or more argument names.
+#'
+#' @examples
+#' # Require that exactly one of elements `[["x"]]` and `[["y"]]` is non-NULL
+#' t <- t_any |> has_relation(exclusive(on_elm("x"), on_elm("y")))
+#' obj_inspect_type(list(x = 1L, y = NULL), t)
+#' obj_inspect_type(list(x = NULL, y = NULL), t)
+#' obj_inspect_type(list(x = 1L, y = 1L), t)
+#'
+#' # Require that either `x` or `y` is supplied
+#' f <- typed(
+#'   exclusive(x, y),
+#'   function(x = optional(t_any), y = optional(t_any)) { NULL }
+#' )
+#' f(x = 1L)
+#' try(f())
+#' try(f(x = 1L, y = "a"))
+#'
+#' @seealso [typed()] for typed function construction, [has_relation()] for adding between-element type constraints.
+#' 
+#' @export
+exclusive <- function(...) {
+  if (context_active("has_relation")) {
+    return(exclusive_elms(...))
+  }
+  if (context_active("typed")) {
+    return(exclusive_args(...))
+  }
+  context_abort(format_styled(
+    "Must be used while defining a relation, ",
+    "e.g. in {.fn has_relation} or {.fn typed}."
+  ))
+}
+
+exclusive_elms <- function(..., error_call = rlang::caller_env()) {
+  context_local("relation")
+  selectors <- flatten_selectors(list(...), error_call = error_call)
+  if (length(selectors) == 0L) {
+    abort_bad_input(
+      format_styled("Must supply at least one selector to {.arg ...}."),
+      error_call = error_call
+    )
+  }
+  new_elms_relation(exclusive_trait(selectors = selectors))
+}
+
+exclusive_args <- function(..., error_call = rlang::caller_env()) {
+  dots <- rlang::enexprs(...)
+  check_relation_dots(dots, error_call = error_call)
+  args <- as.character(dots)
+  new_args_relation(
+    call = rlang::call2("inline_assert_exclusive", !!!dots, .ns = "type"),
+    args = args,
+    description = format_styled("Exactly one of {oxford(backtick(args))} must be supplied.")
+  )
+}
+
+exclusive_trait <- new_trait("exclusive", params = c("selectors"))
+
+method(trait_test, exclusive_trait) <- function(trait, obj) {
+  values <- on_obj_values(obj, trait@selectors)
+  sum(!map_lgl(values, is.null)) == 1L
+}
+
+method(trait_diagnose, exclusive_trait) <- function(trait, obj, obj_name) {
+  values <- on_obj_values(obj, trait@selectors)
+  labels <- on_obj_labels(obj, obj_name, trait@selectors)
+
+  is_error <- map_lgl(values, rlang::is_error)
+  if (any(is_error)) {
+    bad_at <- which.max(is_error)
+    return(c(
+      x = format_styled("{labels[[bad_at]]} must return a value, not raise an error.")
+    ))
+  }
+
+  non_null <- !map_lgl(values, is.null)
+  n_non_null <- sum(non_null)
+  header <- format_styled("Exactly one of {oxford(labels)} must be non-NULL.")
+
+  if (n_non_null == 0L) {
+    return(c(
+      i = header,
+      x = format_styled("Every element is NULL.")
+    ))
+  }
+  c(
+    i = header,
+    x = format_styled("{oxford(labels[non_null])} are all non-NULL.")
+  )
+}
+
+method(trait_describe, exclusive_trait) <- function(trait, obj_name) {
+  descriptions <- map_chr(
+    trait@selectors, 
+    \(selector) selector@describer(obj_name, NULL)
+  )
+  format_styled("Exactly one of {str_upper1(oxford(descriptions))} are non-NULL.")
+}
+
+#' @rdname inlined-functions
+#' @export
+inline_assert_exclusive <- function(..., error_call = rlang::caller_env()) {
+  parent_frame <- rlang::caller_env()
+  args <- rlang::enexprs(...)
+  labels <- backtick(as.character(args))
+
+  non_missing <- map_lgl(args, \(x) rlang::inject(!base::missing(!!x), parent_frame))
+  n_non_missing <- sum(non_missing)
+  if (n_non_missing == 1L) return(invisible())
+
+  abort_mistyped_arg(
+    c(
+      format_styled(
+        "Exactly one of {qty(length(labels))}argument{?s} {oxford(labels)} must be supplied."
+      ),
+      x = if (n_non_missing == 0L) {
+        format_styled("No arguments were supplied.")
+      } else {
+        format_styled("{oxford(labels[non_missing])} are all supplied.")
+      }
     ),
     error_call = error_call
   )
