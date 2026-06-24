@@ -306,11 +306,7 @@ method(trait_test, same_sized_trait) <- function(trait, obj) {
   all(sizes == sizes[[1]])
 }
 
-method(trait_diagnose, same_sized_trait) <- function(
-  trait,
-  obj,
-  obj_name
-) {
+method(trait_diagnose, same_sized_trait) <- function(trait, obj, obj_name) {
   values <- on_obj_values(obj, trait@selectors)
   labels <- on_obj_labels(obj, obj_name, trait@selectors)
 

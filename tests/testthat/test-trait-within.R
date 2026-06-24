@@ -19,6 +19,8 @@ test_that("within() type tests and checks work as expected", {
 })
 
 test_that("within() description and diagnosis are as expected", {
+  skip_on_covr()
+  
   t <- t_any |> within(c("a", "b", "c"))
 
   expect_snapshot(obj_inspect_type(c("a", "b"), t))

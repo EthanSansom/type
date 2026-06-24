@@ -19,6 +19,8 @@ test_that("contains() type tests and checks work as expected", {
 })
 
 test_that("contains() description and diagnosis are as expected", {
+  skip_on_covr()
+  
   t <- t_any |> contains(c("a", "b", "c"))
 
   expect_snapshot(obj_inspect_type(c("a", "b", "c", "d"), t))

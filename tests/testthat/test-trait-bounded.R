@@ -65,6 +65,8 @@ test_that("bounded() returns FALSE when comparison raises an error", {
 })
 
 test_that("bounded() description and diagnosis are as expected", {
+  skip_on_covr()
+
   t_closed <- t_any |> bounded(0L, 10L)
   t_half_open <- t_any |> bounded(0L, 10L, bounds = "[)")
   t_open <- t_any |> bounded(0L, 10L, bounds = "()")

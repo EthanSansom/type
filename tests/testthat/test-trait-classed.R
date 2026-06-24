@@ -29,6 +29,8 @@ test_that("classed() with inherits = 'all' works as expected", {
 })
 
 test_that("classed() description and diagnosis are as expected", {
+  skip_on_covr()
+
   t_any_cls <- t_any |> classed(c("Date", "POSIXct"), inherits = "any")
   t_all_cls <- t_any |> classed(c("POSIXct", "POSIXt"), inherits = "all")
   t_one_cls <- t_any |> classed("Date")

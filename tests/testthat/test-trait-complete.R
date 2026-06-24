@@ -18,6 +18,8 @@ test_that("complete() type tests and checks work as expected", {
 })
 
 test_that("complete() description and diagnosis are as expected", {
+  skip_on_covr()
+
   t <- t_any |> complete()
 
   expect_snapshot(obj_inspect_type(c(1L, 2L, 3L), t))

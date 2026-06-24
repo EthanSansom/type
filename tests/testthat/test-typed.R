@@ -218,6 +218,8 @@ test_that("optional() and maybe() can be combined as expected", {
 # printing ---------------------------------------------------------------------
 
 test_that("typed() prints as expected", {
+  skip_on_covr()
+
   # The {testthat} environment changes between runs, which causes the
   # print method to print a different function environment each time
   with_empty_env <- function(x) { environment(x) <- emptyenv(); x }

@@ -34,6 +34,8 @@ test_that("sized() type tests and checks work as expected", {
 })
 
 test_that("sized() description and diagnosis are as expected", {
+  skip_on_covr()
+
   t_size1 <- t_any |> sized(1L)
   expect_snapshot(obj_inspect_type(10, t_size1))
   expect_snapshot(obj_inspect_type(1:2, t_size1))

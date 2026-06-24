@@ -135,6 +135,8 @@ test_that("has() chained traits are both checked", {
 })
 
 test_that("has() description and diagnosis are as expected", {
+  skip_on_covr()
+
   t1 <- t_any |> has(on_elm(1L), t_int)
   t2 <- t_any |> has(on(names), t_chr |> sized(2L))
   t3 <- t_any |> has(on_each(), t_lgl)

@@ -21,6 +21,8 @@ test_that("setequal_to() type tests and checks work as expected", {
 })
 
 test_that("setequal_to() description and diagnosis are as expected", {
+  skip_on_covr()
+  
   t <- t_any |> setequal_to(c("a", "b", "c"))
 
   expect_snapshot(obj_inspect_type(c("c", "b", "a"), t))

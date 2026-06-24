@@ -29,6 +29,8 @@ test_that("bare_typed() type tests and checks work as expected", {
 })
 
 test_that("bare_typed() description and diagnosis are as expected", {
+  skip_on_covr()
+
   t_bare_list <- t_any |> bare_typed("list")
   expect_snapshot(obj_inspect_type(list(), t_bare_list))
   expect_snapshot(obj_inspect_type(mean, t_bare_list))
