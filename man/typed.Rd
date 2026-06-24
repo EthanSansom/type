@@ -93,8 +93,19 @@ types cannot be modified using \code{\link[=optional]{optional()}} or \code{\lin
 }
 
 \examples{
-# TODO: Examples
-f <- typed(function(x) { x })
+any2 <- typed(
+  function(... = t_lgl, na.rm = t_bool \%:\% FALSE) { 
+    any(..., na.rm) 
+  },
+  returns = t_lgl |> sized(1L)
+)
+print(any2)
+
+# Correctly typed inputs proceed normally
+any2(c(TRUE, FALSE), TRUE, na.rm = FALSE)
+
+# Mistyped inputs cause an error
+try(any2(TRUE, na.rm = "no"))
 
 }
 \seealso{

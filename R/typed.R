@@ -93,8 +93,19 @@
 #' @seealso [optional()] and [maybe()] for argument modifications, [same_sized()] and [same_classed()] for between-argument constraints.
 #'
 #' @examples
-#' # TODO: Examples
-#' f <- typed(function(x) { x })
+#' any2 <- typed(
+#'   function(... = t_lgl, na.rm = t_bool %:% FALSE) { 
+#'     any(..., na.rm) 
+#'   },
+#'   returns = t_lgl |> sized(1L)
+#' )
+#' print(any2)
+#' 
+#' # Correctly typed inputs proceed normally
+#' any2(c(TRUE, FALSE), TRUE, na.rm = FALSE)
+#' 
+#' # Mistyped inputs cause an error
+#' try(any2(TRUE, na.rm = "no"))
 #' 
 #' @export
 typed <- function(..., returns = NULL) {
