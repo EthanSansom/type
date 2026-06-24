@@ -452,8 +452,6 @@ bounds_label <- function(left, right, left_open, right_open) {
 #' A copy of `type` with an additional constraint that objects contain 
 #' all elements of `values`.
 #'
-#' @seealso [sized()] to constrain the number of elements rather than their values.
-#'
 #' @examples
 #' t_rgb <- t_chr |> contains(c("r", "g", "b"))
 #' obj_inspect_type(c("r", "g", "b", "a"), t_rgb)
@@ -487,6 +485,62 @@ method(trait_diagnose, contains_trait) <- function(trait, obj, obj_name) {
 
 method(trait_describe, contains_trait) <- function(trait, obj_name) {
   describe_vec_set_relation(obj_name, trait@values, "all_of")
+}
+
+# within -----------------------------------------------------------------------
+
+#' Check that object is a subset
+#'
+#' @description
+#'
+#' `within()` returns a copy of `type` that requires every element of an object
+#' to be within `values`, checked via [vctrs::vec_in()].
+#'
+#' @param type 
+#' 
+#' A type.
+#' 
+#' @param values 
+#' 
+#' A non-empty, non-list vector of values that elements of object must be within.
+#'
+#' @returns 
+#' 
+#' A copy of `type` with an additional constraint that objects are within `values`.
+#'
+#' @examples
+#' t_weekend <- t_chr |> within(c("Sat", "Sun"))
+#' obj_inspect_type("Sat", t_weekend)
+#' obj_inspect_type(c("A", "B"), t_weekend)
+#'
+#' @export
+within <- function(type, values) {
+  assert_is_type(type)
+  assert_is_simple_vector(values)
+  if (vctrs::vec_size(values) == 0L) {
+    abort_bad_input("{.arg values} must be non-empty.")
+  }
+
+  if (!is_bare_vector_type(type)) {
+    type <- type |> add_trait(vector_trait())
+  }
+
+  type |>
+    add_trait(within_trait(values = unique(values)))
+}
+
+within_trait <- new_trait("within", params = c("values"))
+
+method(trait_test, within_trait) <- function(trait, obj) {
+  test_vec_set_relation(obj, trait@values, "subset_of")
+}
+
+method(trait_diagnose, within_trait) <- function(trait, obj, obj_name) {
+  diagnose_vec_set_relation(obj, trait@values, "subset_of", obj_name)
+}
+
+method(trait_describe, within_trait) <- function(trait, obj_name) {
+  describe_vec_set_relation(obj_name, trait@values, "subset_of")
 }
 
 # vector -----------------------------------------------------------------------
