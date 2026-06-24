@@ -2,7 +2,7 @@
 % Please edit documentation in R/trait-core.R
 \name{bare_typed}
 \alias{bare_typed}
-\title{Constrain the \code{typeof()} of a type}
+\title{Check \code{typeof()}}
 \usage{
 bare_typed(type, typeof)
 }

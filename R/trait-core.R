@@ -753,7 +753,9 @@ method(trait_describe, disjoint_to_trait) <- function(trait, obj_name) {
   describe_vec_set_relation(obj_name, trait@values, "none_of")
 }
 
-# vector -----------------------------------------------------------------------
+# internal traits --------------------------------------------------------------
+
+#nocov start
 
 vector_trait <- new_trait("vector")
 
@@ -773,6 +775,28 @@ method(trait_diagnose, vector_trait) <- function(trait, obj, obj_name) {
 method(trait_describe, vector_trait) <- function(trait, obj_name) {
   format_styled("{.arg {obj_name}} is a {.pkg vctrs} style vector.")
 }
+
+# Not implementing as a type union as `is.numeric()` is more lenient than `t_int || t_dbl`
+numeric_trait <- new_trait("numeric")
+
+method(trait_test, numeric_trait) <- function(trait, obj) {
+  is.numeric(obj)
+}
+
+method(trait_diagnose, numeric_trait) <- function(trait, obj, obj_name) {
+  c(
+    x = format_styled(
+      "{.arg {obj_name}} must be a numeric vector, ",
+      "not <<fmt_r_type(obj)>>."
+    )
+  )
+}
+
+method(trait_describe, numeric_trait) <- function(trait, obj_name) {
+  format_styled("{.arg {obj_name}} is a numeric vector.")
+}
+
+#nocov end
 
 # helpers ----------------------------------------------------------------------
 

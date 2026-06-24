@@ -6,6 +6,8 @@
 \alias{on_elm}
 \alias{on_data}
 \alias{on_each}
+\alias{on_elms}
+\alias{on_attrs}
 \title{Select an element or attribute to type}
 \usage{
 on(accessor)
@@ -17,6 +19,10 @@ on_elm(index)
 on_data()
 
 on_each()
+
+on_elms(indices)
+
+on_attrs(attrs)
 }
 \arguments{
 \item{accessor}{A call using \code{.x} as the object placeholder, or a bare symbol \code{f} as
@@ -25,6 +31,10 @@ shorthand for \code{f(.x)}.}
 \item{name}{For \code{on_attr()}, a single attribute name (character).}
 
 \item{index}{For \code{on_elm()}, a single position (integer) or name (character).}
+
+\item{indices}{For \code{on_elms()}, positions (integer) or names (character).}
+
+\item{attrs}{For \code{on_attrs()}, attribute names (character).}
 }
 \value{
 A selector. These functions may only be used within \code{\link[=has]{has()}} and relations
@@ -64,6 +74,15 @@ common cases of \code{on(.x[[index]])} and \code{on(attr(.x, name))}.
 has(t_any, on_attr("dim"), t_int) # same as `on(attr(.x, "dim"))`
 }\if{html}{\out{</div>}}
 
+\code{on_elms(indices)} and \code{on_attrs(names)} are the multiple selector forms
+of \code{on_elm()} and \code{on_attr()}, useful for selecting multiple elements
+in a relation:
+
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{# These are equivilant
+t_any |> has_relation(same_sized(on_elms(c(1L, 2L))))
+t_any |> has_relation(same_sized(on_elm(1L), on_elm(2L)))
+}\if{html}{\out{</div>}}
+
 \code{on_data()} selects the underlying data of an object after it's attributes
 and class has been removed (via \code{\link[=unclass]{unclass()}}).
 
@@ -82,9 +101,19 @@ t_list_of_int <- t_list |> has(on_each(), t_int)
 }\if{html}{\out{</div>}}
 }
 \examples{
-# TODO: Examples
+t_coords <- t_list |>
+  has(on(names), t_chr |> setequal_to(c("lat", "lon"))) |>
+  has(on_elm("lat"), t_dbl |> bounded(-90, 90)) |>
+  has(on_elm("lon"), t_dbl |> bounded(-180, 180)) |>
+  has_relation(same_sized(on_elms(c("lat", "lon"))
+
+good <- list(lat = c(70, 20, -50), lon = c(100, 0, 85))
+obj_is_type(good)
+
+bad <- list(lat = c(1, 7), lon = 90)
+obj_inspect_type(bad)
 
 }
 \seealso{
-\code{\link[=has]{has()}} to attach a selector to a type, \code{\link[=on_elms]{on_elms()}} and \code{\link[=on_attrs]{on_attrs()}} for multi-selector equivalents.
+\code{\link[=has]{has()}} to attach a selector to a type, \code{\link[=has_relation]{has_relation()}} to attatch a relation to a type.
 }

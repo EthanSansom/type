@@ -2,7 +2,7 @@
 % Please edit documentation in R/trait-core.R
 \name{bounded}
 \alias{bounded}
-\title{Constrain the upper and lower bounds of a type}
+\title{Check upper and lower bounds}
 \usage{
 bounded(type, left = NULL, right = NULL, bounds = "[]")
 }
@@ -23,11 +23,11 @@ A copy of \code{type} with an additional bound constraint.
 \code{bounded()} returns a copy of \code{type} that requires objects to fall within a
 range. Bounds are specified by \code{left} and \code{right}, and the interval type is
 controlled by \code{bounds}:\tabular{lll}{
-   Bounds \tab Interval \tab Condition \cr
-   "[]" \tab Closed \tab left <= x & x <= right \cr
-   "[)" \tab Right-open \tab left <= x & x < right \cr
-   "(]" \tab Left-open \tab left < x & x <= right \cr
-   "()" \tab Open \tab left < x & x < right` \cr
+   \code{bounds} \tab Interval \tab Condition \cr
+   \code{"[]"} \tab Closed \tab \code{left <= x & x <= right} \cr
+   \code{"[)"} \tab Right-open \tab \code{left <= x & x < right} \cr
+   \code{"(]"} \tab Left-open \tab \code{left < x & x <= right} \cr
+   \code{"()"} \tab Open \tab \code{left < x & x < right} \cr
 }
 
 
@@ -41,8 +41,7 @@ t_chr |> bounded("m", "p")         # starts with "m", "n", "o", or "p"
 \code{bounded()} ignores \code{NA} values when checking bounds. To require
 non-missingness, combine with the \code{complete()} trait.
 
-[)"   | Right-open   | left <= x & x < right  |
-| "(]: R:)\%22\%20\%20\%20\%7C\%20Right-open\%20\%20\%20\%7C\%20left\%20\%3C=\%20x\%20&\%20x\%20\%3C\%20right\%20\%20\%7C\%0A\%7C\%20\%22(
+[)"\verb{  | Right-open   |}left <= x & x < right\verb{ | |}"(]: R:)\%22\%60\%20\%20\%20\%7C\%20Right-open\%20\%20\%20\%7C\%20\%60left\%20\%3C=\%20x\%20&\%20x\%20\%3C\%20right\%60\%20\%20\%7C\%0A\%7C\%20\%60\%22(
 [0, 1]: R:0,\%201
 }
 \examples{

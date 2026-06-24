@@ -2,7 +2,7 @@
 % Please edit documentation in R/trait-core.R
 \name{sized}
 \alias{sized}
-\title{Constrain the size of a type}
+\title{Check size}
 \usage{
 sized(type, size)
 }

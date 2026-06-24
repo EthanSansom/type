@@ -39,6 +39,16 @@
 #' has(t_any, on_attr("dim"), t_int) # same as `on(attr(.x, "dim"))`
 #' ```
 #' 
+#' `on_elms(indices)` and `on_attrs(names)` are the multiple selector forms
+#' of `on_elm()` and `on_attr()`, useful for selecting multiple elements
+#' in a relation:
+#' 
+#' ```r
+#' # These are equivilant
+#' t_any |> has_relation(same_sized(on_elms(c(1L, 2L))))
+#' t_any |> has_relation(same_sized(on_elm(1L), on_elm(2L)))
+#' ```
+#' 
 #' `on_data()` selects the underlying data of an object after it's attributes 
 #' and class has been removed (via [unclass()]).
 #' 
@@ -67,9 +77,17 @@
 #' 
 #' For `on_elm()`, a single position (integer) or name (character).
 #' 
-#' @param name 
+#' @param indices 
+#' 
+#' For `on_elms()`, positions (integer) or names (character).
+#'
+#' @param name
 #' 
 #' For `on_attr()`, a single attribute name (character).
+#'
+#' @param attrs 
+#' 
+#' For `on_attrs()`, attribute names (character).
 #' 
 #' @returns
 #' 
@@ -77,10 +95,20 @@
 #' such as [same_sized()] and [same_classed()]. Outside of these contexts, the
 #' `on()` functions raise an error. 
 #'
-#' @seealso [has()] to attach a selector to a type, [on_elms()] and [on_attrs()] for multi-selector equivalents.
+#' @seealso [has()] to attach a selector to a type, [has_relation()] to attatch a relation to a type.
 #' 
 #' @examples
-#' # TODO: Examples
+#' t_coords <- t_list |>
+#'   has(on(names), t_chr |> setequal_to(c("lat", "lon"))) |>
+#'   has(on_elm("lat"), t_dbl |> bounded(-90, 90)) |>
+#'   has(on_elm("lon"), t_dbl |> bounded(-180, 180)) |>
+#'   has_relation(same_sized(on_elms(c("lat", "lon"))
+#' 
+#' good <- list(lat = c(70, 20, -50), lon = c(100, 0, 85))
+#' obj_is_type(good)
+#' 
+#' bad <- list(lat = c(1, 7), lon = 90)
+#' obj_inspect_type(bad)
 #'
 #' @export
 on <- function(accessor) {
@@ -189,7 +217,7 @@ on_each <- function() {
 
 # multiple selectors -----------------------------------------------------------
 
-# TODO: Document
+#' @rdname on
 #' @export
 on_elms <- function(indices) {
   context_assert(
@@ -200,7 +228,7 @@ on_elms <- function(indices) {
   map(indices, on_elm_impl)
 }
 
-# TODO: Document
+#' @rdname on
 #' @export
 on_attrs <- function(attrs) {
   context_assert(

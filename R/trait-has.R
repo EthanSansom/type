@@ -43,7 +43,32 @@
 #' @seealso [on()] for available selectors, [has_relation()] to add between-element constraints.
 #'
 #' @examples
-#' # TODO
+#' # Constrain a list element by position or name
+#' t_pair <- t_list |>
+#'   has(on_elm(1L), t_chr) |>
+#'   has(on_elm("a"), t_int)
+#'
+#' obj_is_type(list("a", a = 1L), t_pair)
+#' obj_is_type(list("a", a = 1.5), t_pair)
+#'
+#' # on() accepts any accessor call, using .x as a placeholder
+#' t_short <- t_chr |> has(on(length(.x)), t_int |> bounded(1L, 5L))
+#'
+#' obj_is_type(c("a", "b"), t_short)
+#' obj_is_type(character(), t_short)
+#' obj_is_type(letters, t_short)
+#'
+#' # on() also accepts a bare function name as shorthand for f(.x)
+#' t_dict <- t_list |> has(on(names), t_chr |> unduplicated())
+#'
+#' obj_is_type(list(x = 1, y = 2), t_dict)
+#' obj_is_type(list(x = 1, x = 2), t_dict)
+#'
+#' # on_each() checks the type of every element
+#' t_list_of_dbl <- t_list |> has(on_each(), t_dbl)
+#'
+#' obj_is_type(list(1.1, 2.2, 3.3), t_list_of_dbl)
+#' obj_is_type(list(1.1, 2L, 3.3), t_list_of_dbl)
 #' 
 #' @export
 has <- function(type, selector, on_type) {
