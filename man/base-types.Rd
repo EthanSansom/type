@@ -15,6 +15,10 @@
 \alias{t_dbl}
 \alias{t_chr}
 \alias{t_string}
+\alias{t_dataframe}
+\alias{t_factor}
+\alias{t_date}
+\alias{t_posixct}
 \alias{t_dots}
 \title{Built-in types}
 \usage{
@@ -43,6 +47,14 @@ t_dbl
 t_chr
 
 t_string
+
+t_dataframe
+
+t_factor
+
+t_date
+
+t_posixct
 
 t_dots
 }
@@ -74,6 +86,10 @@ The following base types are provided:\tabular{ll}{
    \code{t_dbl} \tab A bare double vector \cr
    \code{t_chr} \tab A bare character vector \cr
    \code{t_string} \tab A single non-\code{NA} string \cr
+   \code{t_dataframe} \tab A data frame \cr
+   \code{t_factor} \tab A factor \cr
+   \code{t_date} \tab A \code{Date} \cr
+   \code{t_posixct} \tab A \code{POSIXct} datetime \cr
    \code{t_dots} \tab A \code{...} argument \cr
 }
 }

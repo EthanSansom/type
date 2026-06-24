@@ -19,22 +19,26 @@
 #'
 #' The following base types are provided:
 #'
-#' | Object     | Matches                                          |
-#' |------------|--------------------------------------------------|
-#' | `t_any`    | Any object                                       |
-#' | `t_null`   | `NULL`                                           |
-#' | `t_list`   | A list                                           |
-#' | `t_env`    | An environment                                   |
-#' | `t_fun`    | A function                                       |
-#' | `t_vec`    | A [vctrs][vctrs::vctrs-package]-style vector     |
-#' | `t_num`    | An numeric (e.g. integer or double) vector       |
-#' | `t_lgl`    | A bare logical vector                            |
-#' | `t_bool`   | A single `TRUE` or `FALSE`                       |
-#' | `t_int`    | A bare integer vector                            |
-#' | `t_dbl`    | A bare double vector                             |
-#' | `t_chr`    | A bare character vector                          |
-#' | `t_string` | A single non-`NA` string                         |
-#' | `t_dots`   | A `...` argument                                 |
+#' | Object      | Matches                                          |
+#' |-------------|--------------------------------------------------|
+#' | `t_any`     | Any object                                       |
+#' | `t_null`    | `NULL`                                           |
+#' | `t_list`    | A list                                           |
+#' | `t_env`     | An environment                                   |
+#' | `t_fun`     | A function                                       |
+#' | `t_vec`     | A [vctrs][vctrs::vctrs-package]-style vector     |
+#' | `t_num`     | An numeric (e.g. integer or double) vector       |
+#' | `t_lgl`     | A bare logical vector                            |
+#' | `t_bool`    | A single `TRUE` or `FALSE`                       |
+#' | `t_int`     | A bare integer vector                            |
+#' | `t_dbl`     | A bare double vector                             |
+#' | `t_chr`     | A bare character vector                          |
+#' | `t_string`  | A single non-`NA` string                         |
+#' | `t_dataframe` | A data frame                                   |
+#' | `t_factor`  | A factor                                         |
+#' | `t_date`    | A `Date`                                         |
+#' | `t_posixct` | A `POSIXct` datetime                             |
+#' | `t_dots`    | A `...` argument                                 |
 #'
 #' @seealso [typed()] for declaring typed functions.
 #' 
@@ -56,7 +60,7 @@
 #' t_name <- t_string |> within(c("x", "y", "z"))
 #'
 #' @name base-types
-#' @aliases t_any t_null t_list t_env t_fun t_vec t_num t_lgl t_bool t_int t_dbl t_chr t_string t_dots
+#' @aliases t_any t_null t_list t_env t_fun t_vec t_num t_lgl t_bool t_int t_dbl t_chr t_string t_dataframe t_factor t_date t_posixct t_dots
 NULL
 
 #' @rdname base-types
@@ -113,6 +117,22 @@ t_string <- NULL
 
 #' @rdname base-types
 #' @export
+t_dataframe <- NULL
+
+#' @rdname base-types
+#' @export
+t_factor <- NULL
+
+#' @rdname base-types
+#' @export
+t_date <- NULL
+
+#' @rdname base-types
+#' @export
+t_posixct <- NULL
+
+#' @rdname base-types
+#' @export
 t_dots <- NULL
 
 on_load_core_types <- function() {
@@ -141,6 +161,14 @@ on_load_core_types <- function() {
   t_chr <<- t_any |> bare_typed("character")
 
   t_string <<- t_chr |> sized(1L) |> complete()
+
+  t_dataframe <- t_any |> classed("data.frame")
+
+  t_factor <- t_any |> classed("factor")
+
+  t_date <- t_any |> classed("Date")
+
+  t_posixct <- t_any |> classed("POSIXct")
 
   t_dots <<- t_any |> endotted()
 }
