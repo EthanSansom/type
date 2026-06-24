@@ -76,6 +76,7 @@
       Arguments:
       * `x` is a bare <logical>.
       * `x` is size 1.
+      * `x` contains no missing values.
       * `y` is a bare <logical>.
       Returns:
       * `<result>` is an R object.
@@ -96,6 +97,7 @@
       Arguments:
       * `x` is a bare <logical>.
       * `x` is size 1.
+      * `x` contains no missing values.
       * `y` is a bare <logical>.
       Relations:
       * `x` and `y` must be the same size.
@@ -118,6 +120,7 @@
       Arguments:
       * `x` is a bare <logical>.
       * `x` is size 1.
+      * `x` contains no missing values.
       * `y` is a bare <logical>.
       Relations:
       * `x` and `y` must be the same size.

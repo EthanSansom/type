@@ -88,7 +88,14 @@
   }
 
   if ("const" %in%  type@modifications) {
-    abort_call <- 
+    abort_expr <- rlang::call2(
+      "inline_abort_mistyped",
+      type = type,
+      message = quote(glue::glue("Can't assign to the constant `{NAME}`.")),
+      what = "obj",
+      error_call = parent_frame,
+      .ns = "type"
+    )
     binding_fun <- eval(rlang::expr(
       local(
         {
@@ -98,11 +105,7 @@
             if (missing(x)) {
               return(VALUE)
             }
-            rlang::abort(
-              glue::glue("Can't assign to the constant `{NAME}`."),
-              class = c("type_error_mistyped_obj", "type_error_mistyped", "type_error"),
-              call = !!parent_frame
-            )
+            !!abort_expr
           }
           class(out) <- c(
             "type_typed_const_binding",
@@ -124,6 +127,17 @@
       type = type,
       .ns = "type"
     )
+    abort_expr <- rlang::call2(
+      "inline_abort_mistyped",
+      type = type,
+      message = quote(c(
+        glue::glue("Attempted to assign a mistyped value to `{NAME}`."),
+        validation_result
+      )),
+      what = "obj",
+      error_call = parent_frame,
+      .ns = "type"
+    )
     binding_fun <- eval(rlang::expr(
       local(
         {
@@ -138,13 +152,7 @@
               VALUE <<- x
               return(VALUE)
             }
-            rlang::abort(
-              c(
-                glue::glue("Attempted to assign a mistyped value to `{NAME}`."),
-                validation_result
-              ),
-              error_call = !!parent_frame
-            )
+            !!abort_expr
           }
           class(out) <- c("type_typed_object_binding", "function")
           attr(out, "bound_name") <- !!name

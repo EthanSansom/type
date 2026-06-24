@@ -453,13 +453,14 @@ inline_arg_assert_type <- function(
 ) {
   for (trait in type@traits) {
     if (!rlang::is_true(trait_test(trait, arg))) {
-      rlang::abort(
-        c(
+      inline_abort_mistyped(
+        type = type,
+        message = c(
           format_styled("Argument {.arg {arg_name}} is mistyped."),
           trait_diagnose(trait, arg, arg_name)
         ),
-        class = c("type_error_mistyped_arg", "type_error_mistyped", "type_error"),
-        call = error_call
+        what = "arg",
+        error_call = error_call
       )
     }
   }
@@ -473,15 +474,16 @@ inline_result_assert_type <- function(
   type, 
   error_call = rlang::caller_env()
 ) {
-    for (trait in type@traits) {
+  for (trait in type@traits) {
     if (!rlang::is_true(trait_test(trait, value))) {
-      rlang::abort(
-        c(
+      inline_abort_mistyped(
+        type = type,
+        message = c(
           format_styled("Return value is mistyped."),
           trait_diagnose(trait, value, "<result>")
         ),
-        class = c("type_error_mistyped_arg", "type_error_mistyped", "type_error"),
-        call = error_call
+        error_call = error_call,
+        what = "arg"
       )
     }
   }

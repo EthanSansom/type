@@ -70,11 +70,7 @@ NULL
 #' @export
 obj_is_type <- function(obj, type) {
   assert_is_type(type)
-
-  for (trait in type@traits) {
-    if (!rlang::is_true(trait_test(trait, obj))) return(FALSE)
-  }
-  TRUE
+  type_test(type, obj)
 }
 
 #' @rdname obj-type
@@ -114,16 +110,44 @@ obj_assert_type <- function(
 
   for (trait in type@traits) {
     if (!rlang::is_true(trait_test(trait, obj))) {
-      rlang::abort(
-        c(
+      inline_abort_mistyped(
+        type = type,
+        message = c(
           format_styled("Object {.arg {obj_name}} is mistyped."),
           trait_diagnose(trait, obj, obj_name)
         ),
-        class = c("type_error_mistyped_obj", "type_error_mistyped", "type_error")
+        what = "obj"
       )
     }
   }
   invisible()
+}
+
+
+#' Return the expected type of the last mistyped object
+#'
+#' @description
+#' 
+#' `last_type()` returns the expected type of the last object to
+#' fail a type check in [obj_assert_type()] or [typed()].
+#' 
+#' @return 
+#' 
+#' The last expected type. If no type assertions have been run, returns `NULL`.
+#' 
+#' @examples
+#' # Returns `NULL` if no type checks have been run
+#' last_type()
+#' 
+#' # `last_type()` returns `t_bool` after failed assertion
+#' \dontrun{
+#' obj_assert_type(10L, t_bool)
+#' last_type()
+#' }
+#' 
+#' @export
+last_type <- function() {
+  the$last_type
 }
 
 # generics ---------------------------------------------------------------------
@@ -167,4 +191,24 @@ type_describe <- function(type, obj_name) {
     return(format_styled("{.arg {obj_name}} is an R object."))
   }
   unlist(map(type@traits, trait_describe, obj_name))
+}
+
+#' @rdname inlined-functions
+#' @export
+inline_abort_mistyped <- function(
+  type,
+  message,
+  what = c("obj", "arg"),
+  error_call = rlang::caller_env()
+) {
+  subclass <- paste0("type_error_mistyped_", what)
+  the$last_type <- type
+  rlang::abort(
+    c(
+      message,
+      i = format_styled("Run {.run last_type()} to get the expected type.")
+    ),
+    class = c(subclass, "type_error_mistyped", "type_error"),
+    call = error_call
+  )
 }
