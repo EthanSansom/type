@@ -299,7 +299,7 @@ assert_named <- function(
     abort_bad_input(
       format_styled(
         "{.arg {x_name}} must have unique names, ",
-        "but has duplicate names <<fmt_at_loc(duplicated(names))>>."
+        "but has duplicate names <<fmt_at_locs(duplicated(names))>>."
       ),
       error_call = error_call
     )
@@ -307,11 +307,11 @@ assert_named <- function(
 
   must <- if (unique) "be uniquely named" else "be named"
   if (length(names) == 1L && is.null(names(x))) {
-    message <- "{.arg {x_name} <<must>>, but has no names attribute."
+    message <- "{.arg {x_name}} <<must>>, but has no names attribute."
   } else {
-    message <- "{.arg {x_name} <<must>>, but is unnamed <<fmt_at_loc(names == '')>>."
+    message <- "{.arg {x_name}} <<must>>, but is unnamed <<fmt_at_locs(names == '')>>."
   }
-  abort_bad_input(message, error_call = error_call)
+  abort_bad_input(format_styled(message), error_call = error_call)
 }
 
 # abort ------------------------------------------------------------------------

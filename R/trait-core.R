@@ -696,6 +696,65 @@ method(trait_describe, setequal_to_trait) <- function(trait, obj_name) {
   describe_vec_set_relation(obj_name, trait@values, "setequal")
 }
 
+# same_as ----------------------------------------------------------------------
+
+#' Check that object is identical to a vector
+#'
+#' @description
+#'
+#' `same_as()` returns a copy of `type` that requires an object to be
+#' identical to `values`, checked via [vctrs::vec_equal()].
+#'
+#' @param type
+#'
+#' A type.
+#'
+#' @param values
+#'
+#' A non-empty, non-list vector that an object must be identical to.
+#'
+#' @returns
+#'
+#' A copy of `type` with an additional constraint that elements of objects 
+#' are identical to `values`.
+#'
+#' @seealso [setequal_to()] to test for equality, ignoring duplicates.
+#'
+#' @examples
+#' t_abc <- t_chr |> same_as(c("a", "b", "c"))
+#' obj_inspect_type(c("a", "b", "c"), t_abc)
+#' obj_inspect_type(c("c", "b", "a"), t_abc)
+#'
+#' @export
+same_as <- function(type, values) {
+  assert_is_type(type)
+  assert_is_simple_vector(values)
+  if (vctrs::vec_size(values) == 0L) {
+    abort_bad_input("{.arg values} must be non-empty.")
+  }
+
+  if (!is_bare_vector_type(type)) {
+    type <- type |> add_trait(vector_trait())
+  }
+
+  type |>
+    add_trait(same_as_trait(values = values))
+}
+
+same_as_trait <- new_trait("same_as", params = c("values"))
+
+method(trait_test, same_as_trait) <- function(trait, obj) {
+  test_vec_set_relation(obj, trait@values, "same")
+}
+
+method(trait_diagnose, same_as_trait) <- function(trait, obj, obj_name) {
+  diagnose_vec_set_relation(obj, trait@values, "same", obj_name)
+}
+
+method(trait_describe, same_as_trait) <- function(trait, obj_name) {
+  describe_vec_set_relation(obj_name, trait@values, "same")
+}
+
 # disjoint_to ------------------------------------------------------------------
 
 #' Check that object does not contain values

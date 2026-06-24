@@ -10,7 +10,6 @@ test_vec_set_relation <- function(obj, vec, relation) {
     none_of = test_relation_none_of(obj, vec),
     setequal = test_relation_setequal(obj, vec),
     same = test_relation_same(obj, vec),
-    perm_of = test_relation_perm_of(obj, vec),
     abort_internal(format_styled("Unexpected relation: {relation}."))
   )
 }
@@ -30,7 +29,6 @@ diagnose_vec_set_relation <- function(
     none_of = diagnose_relation_none_of(obj, vec, obj_name),
     setequal = diagnose_relation_setequal(obj, vec, obj_name),
     same = diagnose_relation_same(obj, vec, obj_name),
-    perm_of = diagnose_relation_perm_of(obj, vec, obj_name),
     abort_internal(format_styled("Unexpected relation: {relation}."))
   )
 }
@@ -49,7 +47,6 @@ describe_vec_set_relation <- function(
     none_of = describe_relation_none_of(obj_name, vec),
     setequal = describe_relation_setequal(obj_name, vec),
     same = describe_relation_same(obj_name, vec),
-    perm_of = describe_relation_perm_of(obj_name, vec),
     abort_internal(format_styled("Unexpected relation: {relation}."))
   )
 }
@@ -64,7 +61,6 @@ abbr_vec_set_relation <- function(relation) {
     none_of = "no",
     setequal = "only",
     same = "same",
-    perm_of = "perm_of",
     abort_internal(format_styled("Unexpected relation: {relation}."))
   )
 }
@@ -249,11 +245,31 @@ test_relation_same <- function(obj, vec) {
 }
 
 diagnose_relation_same <- function(obj, vec, obj_name) {
+  in_obj <- try_test(vctrs::vec_in(vec, obj))
+  in_vec <- try_test(vctrs::vec_in(obj, vec))
+
+  if (!(is.logical(in_obj) && is.logical(in_vec))) {
+    return( c(
+      i = format_styled("{.arg {obj_name}} must be: <<fmt_vec_string(vec)>>."),
+      x = format_styled("Checking for elements in {.arg {obj_name}} raised an error.")
+    ))
+  }
+
+  if (any(!in_obj) || any(!in_vec)) {
+    return(c(
+      i = format_styled("{.arg {obj_name}} must be: <<fmt_vec_string(vec)>>."),
+      x = if (any(!in_obj)) bullet_missing_vec(obj_name, vec[!in_obj]),
+      x = if (any(!in_vec)) bullet_unexpected_vec(obj_name, obj[!in_vec])
+    ))
+  }
+
   obj_size <- vctrs::vec_size(obj)
   vec_size <- vctrs::vec_size(vec)
-
   if (obj_size != vec_size) {
-    return(c(x = bullet_bad_n_vec(obj_name, obj_size, vec_size)))
+    return(c(
+      i = format_styled("{.arg {obj_name}} must be: <<fmt_vec_string(vec)>>."),
+      x = bullet_bad_n_vec(obj_name, obj_size, vec_size)
+    ))
   }
 
   not_same <- try_test(!vctrs::vec_equal(obj, vec, na_equal = TRUE))
@@ -276,52 +292,6 @@ describe_relation_same <- function(obj_name, vec) {
   elements <- fmt_vec_string(vec, n_elm_max = Inf, n_chr_max = Inf)
   format_styled(
     "{.arg {obj_name}} is the same as: <<elements>>."
-  )
-}
-
-# perm_of ----------------------------------------------------------------------
-
-test_relation_perm_of <- function(obj, vec) {
-  rlang::is_true(try_test(vctrs::vec_size(obj) == vctrs::vec_size(vec) && test_relation_setequal(obj, vec)))
-}
-
-diagnose_relation_perm_of <- function(obj, vec, obj_name) {
-  obj_size <- vctrs::vec_size(obj)
-  vec_size <- vctrs::vec_size(vec)
-
-  header <- format_styled(
-    "{.arg {obj_name}} must be a permutation of: <<fmt_vec_string(vec)>>."
-  )
-
-  if (obj_size != vec_size) {
-    return(c(
-      i = header,
-      x = bullet_bad_n_vec(obj_name, obj_size, vec_size)
-    ))
-  }
-
-  in_obj <- try_test(vctrs::vec_in(vec, obj))
-  in_vec <- try_test(vctrs::vec_in(obj, vec))
-  
-  if (!(is.logical(in_obj) & is.logical(in_vec))) {
-    footer <- c(x = format_styled("Checking for elements in {.arg {obj_name}} raised an error."))
-  } else {
-    footer <- c(
-      x = if (any(!in_obj)) bullet_missing_vec(obj_name, vec[!in_obj]),
-      x = if (any(!in_vec)) bullet_unexpected_vec(obj_name, obj[!in_vec])
-    )
-  }
-
-  c(
-    i = header,
-    footer
-  )
-}
-
-describe_relation_perm_of <- function(obj_name, vec) {
-  elements <- fmt_vec_string(vec, n_elm_max = Inf, n_chr_max = Inf)
-  format_styled(
-    "{.arg {obj_name}} is a permutation of: <<elements>>."
   )
 }
 
