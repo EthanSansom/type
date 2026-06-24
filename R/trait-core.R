@@ -48,6 +48,103 @@ method(trait_describe, sized_trait) <- function(trait, obj_name) {
   format_styled("{.arg {obj_name}} is size {trait@size}.")
 }
 
+# complete ---------------------------------------------------------------------
+
+#' Check for missing values
+#'
+#' @description
+#' 
+#' `complete()` returns a copy of `type` that requires objects to contain
+#' no missing (i.e. `NA`) values, checked via [vctrs::vec_any_missing()].
+#'
+#' @param type A type.
+#'
+#' @return A copy of `type` with an additional non-missingness constraint.
+#'
+#' @examples
+#' t_real <- t_dbl |> complete()
+#' obj_inspect_type(10.6, t_real)
+#' obj_inspect_type(c(1, NA), t_real)
+#'
+#' @export
+complete <- function(type) {
+  assert_is_type(type)
+
+  if (!is_bare_vector_type(type)) {
+    type <- type |> add_trait(vector_trait())
+  }
+  type |>
+    add_trait(complete_trait())
+}
+
+complete_trait <- new_trait("complete")
+
+method(trait_test, complete_trait) <- function(trait, obj) {
+  !vctrs::vec_any_missing(obj)
+}
+
+method(trait_diagnose, complete_trait) <- function(trait, obj, obj_name) {
+  missing_at <- vctrs::vec_detect_missing(obj)
+  bad <- if (!is.object(obj) && is.list(obj)) "{.val {NULL}}" else "{.val {NA}}"
+  at <- fmt_at_locs(missing_at)
+  c(
+    i = format_styled("{.arg {obj_name}} must not contain missing elements."),
+    x = format_styled("{.arg {obj_name}} is <<bad>> <<at>>.")
+  )
+}
+
+method(trait_describe, complete_trait) <- function(trait, obj_name) {
+  format_styled("{.arg {obj_name}} contains no missing values.")
+}
+
+# unduplicated -----------------------------------------------------------------
+
+#' Check for duplicate values
+#'
+#' @description
+#' 
+#' `unduplicated()` returns a copy of `type` that requires objects to contain
+#' no duplicate values, checked via [vctrs::vec_duplicate_any()].
+#'
+#' @param type A type.
+#'
+#' @return A copy of `type` with an additional non-duplicate constraint.
+#'
+#' @examples
+#' t_ids <- t_chr |> unduplicated()
+#' obj_inspect_type(c("a1", "a2"), t_ids)
+#' obj_inspect_type(c("a1", "b1", "b1"), t_ids)
+#'
+#' @export
+unduplicated <- function(type) {
+  assert_is_type(type)
+
+  if (!is_bare_vector_type(type)) {
+    type <- type |> add_trait(vector_trait())
+  }
+  type |>
+    add_trait(unduplicated_trait())
+}
+
+unduplicated_trait <- new_trait("unduplicated")
+
+method(trait_test, unduplicated_trait) <- function(trait, obj) {
+  !vctrs::vec_duplicate_any(obj)
+}
+
+method(trait_diagnose, unduplicated_trait) <- function(trait, obj, obj_name) {
+  duplicated_at <- vctrs::vec_duplicate_detect(obj)
+  at <- fmt_at_locs(duplicated_at)
+  c(
+    i = format_styled("{.arg {obj_name}} must not contain duplicate elements."),
+    x = format_styled("{.arg {obj_name}} contains duplicate elements <<at>>.")
+  )
+}
+
+method(trait_describe, unduplicated_trait) <- function(trait, obj_name) {
+  format_styled("{.arg {obj_name}} contains no duplicated values.")
+}
+
 # bare_typed -------------------------------------------------------------------
 
 #' Check `typeof()`
@@ -541,6 +638,119 @@ method(trait_diagnose, within_trait) <- function(trait, obj, obj_name) {
 
 method(trait_describe, within_trait) <- function(trait, obj_name) {
   describe_vec_set_relation(obj_name, trait@values, "subset_of")
+}
+
+# setequal_to ------------------------------------------------------------------
+
+#' Check that object is a given set
+#'
+#' @description
+#'
+#' `setequal_to()` returns a copy of `type` that requires an object to be
+#' setequal to `values`, checked via [vctrs::vec_in()].
+#'
+#' @param type 
+#' 
+#' A type.
+#' 
+#' @param values 
+#' 
+#' A non-empty, non-list vector of values that an object must be setequal to.
+#'
+#' @returns 
+#' 
+#' A copy of `type` with an additional constraint that objects are setequal to `values`.
+#'
+#' @examples
+#' t_three <- t_int |> setequal_to(1:3)
+#' obj_inspect_type(c(1L, 2L, 3L, 1L), t_three)
+#' obj_inspect_type(10L, t_three)
+#'
+#' @export
+setequal_to <- function(type, values) {
+  assert_is_type(type)
+  assert_is_simple_vector(values)
+  if (vctrs::vec_size(values) == 0L) {
+    abort_bad_input("{.arg values} must be non-empty.")
+  }
+
+  if (!is_bare_vector_type(type)) {
+    type <- type |> add_trait(vector_trait())
+  }
+
+  type |>
+    add_trait(setequal_to_trait(values = unique(values)))
+}
+
+setequal_to_trait <- new_trait("setequal_to", params = c("values"))
+
+method(trait_test, setequal_to_trait) <- function(trait, obj) {
+  test_vec_set_relation(obj, trait@values, "setequal")
+}
+
+method(trait_diagnose, setequal_to_trait) <- function(trait, obj, obj_name) {
+  diagnose_vec_set_relation(obj, trait@values, "setequal", obj_name)
+}
+
+method(trait_describe, setequal_to_trait) <- function(trait, obj_name) {
+  describe_vec_set_relation(obj_name, trait@values, "setequal")
+}
+
+# disjoint_to ------------------------------------------------------------------
+
+#' Check that object does not contain values
+#'
+#' @description
+#'
+#' `disjoint_to()` returns a copy of `type` that requires an object to be
+#' not contain any of `values`, checked via [vctrs::vec_in()].
+#'
+#' @param type 
+#' 
+#' A type.
+#' 
+#' @param values 
+#' 
+#' A non-empty, non-list vector of values that an object must not contain.
+#'
+#' @returns 
+#' 
+#' A copy of `type` with an additional constraint that objects contain
+#' none of `values`.
+#'
+#' @examples
+#' t_not_three <- t_int |> setequal_to(1:3)
+#' obj_inspect_type(10L, t_not_three)
+#' obj_inspect_type(c(1L, 2L, 3L, 1L), t_not_three)
+#'
+#' @export
+disjoint_to <- function(type, values) {
+  assert_is_type(type)
+  assert_is_simple_vector(values)
+  if (vctrs::vec_size(values) == 0L) {
+    abort_bad_input("{.arg values} must be non-empty.")
+  }
+
+  if (!is_bare_vector_type(type)) {
+    type <- type |> add_trait(vector_trait())
+  }
+
+  type |>
+    add_trait(disjoint_to_trait(values = unique(values)))
+}
+
+disjoint_to_trait <- new_trait("disjoint_to", params = c("values"))
+
+method(trait_test, disjoint_to_trait) <- function(trait, obj) {
+  test_vec_set_relation(obj, trait@values, "none_of")
+}
+
+method(trait_diagnose, disjoint_to_trait) <- function(trait, obj, obj_name) {
+  diagnose_vec_set_relation(obj, trait@values, "none_of", obj_name)
+}
+
+method(trait_describe, disjoint_to_trait) <- function(trait, obj_name) {
+  describe_vec_set_relation(obj_name, trait@values, "none_of")
 }
 
 # vector -----------------------------------------------------------------------
