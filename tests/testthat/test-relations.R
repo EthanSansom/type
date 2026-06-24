@@ -5,6 +5,8 @@ test_that("Relations error when used in invalid contexts", {
   expect_error(t_any |> has(same_sized(on_each())), class = "type_error_bad_input")
   expect_error(same_classed(on_each()), class = "type_error_bad_input")
   expect_error(t_any |> has(same_classed(on_each())), class = "type_error_bad_input")
+  expect_error(exclusive(on_each()), class = "type_error_bad_input")
+  expect_error(t_any |> has(exclusive(on_each())), class = "type_error_bad_input")
 })
 
 test_that("Relations within `has_relation()` error on invalid inputs", {
@@ -12,6 +14,8 @@ test_that("Relations within `has_relation()` error on invalid inputs", {
   expect_error(t_any |> has_relation(same_sized()), class = "type_error_bad_input")
   expect_error(t_any |> has_relation(same_classed("A")), class = "type_error_bad_input")
   expect_error(t_any |> has_relation(same_classed()), class = "type_error_bad_input")
+    expect_error(t_any |> has_relation(exclusive("A")), class = "type_error_bad_input")
+  expect_error(t_any |> has_relation(exclusive()), class = "type_error_bad_input")
 })
 
 test_that("Relations within `typed()` error on invalid inputs", {
@@ -37,6 +41,18 @@ test_that("Relations within `typed()` error on invalid inputs", {
   )
   expect_error(
     typed(same_classed(on_each()), function(x, y) { x }), 
+    class = "type_error_bad_input"
+  )
+  expect_error(
+    typed(exclusive(), function(x) { x }), 
+    class = "type_error_bad_input"
+  )
+  expect_error(
+    typed(exclusive(y, z), function(x, y) { x }), 
+    class = "type_error_bad_input"
+  )
+  expect_error(
+    typed(exclusive(on_each()), function(x, y) { x }), 
     class = "type_error_bad_input"
   )
 })
@@ -129,7 +145,7 @@ test_that("same_sized() works as expected within object type checks", {
 
   expect_no_error(obj_assert_type(list(1:3, 1:3), t))
   expect_error(obj_assert_type(list(1:3, 1:2), t), class = "type_error_mistyped_obj")
-  expect_error(obj_assert_type(list(mean, 1:3), t), class = "type_error_mistyped_obj")
+  expect_error(obj_assert_type(list(1L), t), class = "type_error_mistyped_obj")
 })
 
 test_that("same_sized() works as expected within argument type checks", {
@@ -139,7 +155,7 @@ test_that("same_sized() works as expected within argument type checks", {
   expect_no_error(f(integer(), integer()))
 
   expect_error(f(1:3, 1:2), class = "type_error_mistyped_arg")
-  expect_error(f(1:3, 1:4), class = "type_error_mistyped_arg")
+  expect_error(f(mean, 1:4), class = "type_error_mistyped_arg")
 })
 
 # same_classed -----------------------------------------------------------------
@@ -155,7 +171,7 @@ test_that("same_classed() works as expected within object type checks", {
 
   expect_no_error(obj_assert_type(list(1:3, 1:3), t))
   expect_error(obj_assert_type(list(1:3, 1.5), t), class = "type_error_mistyped_obj")
-  expect_error(obj_assert_type(list(mean, 1:3), t), class = "type_error_mistyped_obj")
+  expect_error(obj_assert_type(list(1), t), class = "type_error_mistyped_obj")
 })
 
 test_that("same_classed() works as expected within argument type checks", {
@@ -188,6 +204,11 @@ test_that("exclusive() works as expected within object type checks", {
     obj_assert_type(list(x = 1L, y = 1L), t),
     class = "type_error_mistyped_obj"
   )
+
+  # Works as expected on invalid indices
+  t <- t_any |> has_relation(exclusive(on_elm(1L), on_elm(2L)))
+  expect_false(obj_is_type(list(1L), t))
+  expect_error(obj_assert_type(list(1L), t), class = "type_error_mistyped_obj")
 })
 
 test_that("exclusive() works as expected within argument type checks", {

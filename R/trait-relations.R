@@ -163,11 +163,7 @@ method(trait_test, same_classed_trait) <- function(trait, obj) {
   all(map_lgl(values[-1], \(v) identical(class(v), class_1)))
 }
 
-method(trait_diagnose, same_classed_trait) <- function(
-  trait,
-  obj,
-  obj_name
-) {
+method(trait_diagnose, same_classed_trait) <- function(trait, obj, obj_name) {
   values <- on_obj_values(obj, trait@selectors)
   labels <- on_obj_labels(obj, obj_name, trait@selectors)
 
@@ -179,12 +175,9 @@ method(trait_diagnose, same_classed_trait) <- function(
     ))
   }
 
-  if (length(values) <= 1L) return(NULL)
-
   classes <- map(values, class)
   class_1 <- classes[[1]]
   wrong <- map_lgl(classes[-1], \(cls) !identical(cls, class_1))
-  if (!any(wrong)) return(NULL)
 
   bad_at <- 1L + which.max(wrong)
   c(
@@ -208,7 +201,7 @@ method(trait_describe, same_classed_trait) <- function(trait, obj_name) {
 inline_assert_same_classed <- function(..., error_call = rlang::caller_env()) {
   labels <- backtick(as.character(rlang::enexprs(...)))
   dots <- list(...)
-  if (length(dots) == 0L) return(invisible())
+  if (length(dots) <= 1) return(invisible())
 
   class_1 <- class(dots[[1]])
   same_class <- map_lgl(dots[-1], \(elm) identical(class(elm), class_1))
@@ -353,7 +346,6 @@ method(trait_describe, same_sized_trait) <- function(trait, obj_name) {
 inline_assert_same_sized <- function(..., error_call = rlang::caller_env()) {
   labels <- backtick(as.character(rlang::enexprs(...)))
   dots <- list(...)
-  if (length(dots) == 0L) return(invisible())
 
   sizes <- map_int(dots, \(arg) {
     if (vctrs::obj_is_vector(arg)) vctrs::vec_size(arg) else NA_integer_

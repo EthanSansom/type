@@ -1,6 +1,7 @@
 test_that("classed() errors on invalid inputs", {
   expect_error(10L |> classed("foo"), class = "type_error_bad_input")
   expect_error(t_any |> classed(1L), class = "type_error_bad_input")
+  expect_error(t_any |> classed(classes = character()), class = "type_error_bad_input")
   expect_error(t_any |> classed(c("foo", NA_character_)), class = "type_error_bad_input")
   expect_error(t_any |> classed("foo", inherits = "some"), class = "type_error_bad_input")
 })

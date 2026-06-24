@@ -23,7 +23,7 @@ test_that("bare_typed() type tests and checks work as expected", {
     obj_assert_type(list(1, 2), t_bare_list)
   )
   expect_error(
-    obj_assert_type(mean, t_bare_list),
+    obj_assert_type(data.frame(), t_bare_list),
     class = "type_error_mistyped_obj"
   )
 })

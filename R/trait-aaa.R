@@ -1,9 +1,5 @@
 trait <- S7::new_class("trait", package = "type", abstract = TRUE)
 
-is_trait <- function(x) {
-  S7::S7_inherits(x, trait)
-}
-
 new_trait <- function(
   name,
   params = character(),

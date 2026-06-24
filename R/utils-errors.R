@@ -17,21 +17,6 @@ assert_is_type <- function(
   )
 }
 
-assert_is_trait <- function(
-  x,
-  x_name = rlang::caller_arg(x),
-  error_call = rlang::caller_env()
-) {
-  if (is_trait(x)) {
-    return(invisible())
-  }
-
-  abort_bad_input(
-    format_styled("{.arg {x_name}} must be a trait, not <<fmt_r_type(x)>>."),
-    error_call = error_call
-  )
-}
-
 assert_is_relation <- function(
   x,
   x_name = rlang::caller_arg(x),

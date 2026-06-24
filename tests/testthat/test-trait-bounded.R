@@ -4,6 +4,7 @@ test_that("bounded() errors on invalid inputs", {
   expect_error(10L |> bounded(0L, 10L), class = "type_error_bad_input")
   expect_error(t_int |> bounded(1:3, 10L), class = "type_error_bad_input")
   expect_error(t_int |> bounded(0L, 1:3), class = "type_error_bad_input")
+  expect_error(t_int |> bounded(), class = "type_error_bad_input")
   expect_error(t_int |> bounded(list(), 10L), class = "type_error_bad_input")
   expect_error(t_int |> bounded(0L, list()), class = "type_error_bad_input")
   expect_error(t_int |> bounded(0L, 10L, bounds = "{}"), class = "type_error_bad_input")
