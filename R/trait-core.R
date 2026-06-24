@@ -156,6 +156,111 @@ method(trait_describe, bare_typed_trait) <- function(trait, obj_name) {
   format_styled("{.arg {obj_name}} is a bare {.cls {trait@typeof}}.")
 }
 
+# classed ----------------------------------------------------------------------
+
+#' Constrain the `class()` of a type
+#'
+#' @description
+#' 
+#' `classed()` returns a copy of `type` that requires objects to inherit from one 
+#' or more classes. The `inherits` argument controls whether the object must 
+#' inherit from all supplied classes or at least one:
+#'
+#' ```r
+#' # Must inherit from "Date"
+#' t_date <- t_any |> classed("Date")
+#'
+#' # Must inherit from both "POSIXct" and "POSIXt"
+#' t_posixct <- t_any |> classed(c("POSIXct", "POSIXt"), inherits = "all")
+#'
+#' # Must inherit from "Date" or "POSIXct"
+#' t_datetime <- t_any |> classed(c("Date", "POSIXct"), inherits = "any")
+#' ```
+#'
+#' @param type 
+#' 
+#' A type.
+#' 
+#' @param classes 
+#' 
+#' A character vector of class names.
+#' 
+#' @param inherits 
+#' 
+#' Whether the object must inherit from `"all"` supplied classes or at 
+#' least `"any"` one. Defaults to `"all"`.
+#'
+#' @returns A copy of `type` with an additional class constraint.
+#'
+#' @seealso [bare_typed()] to constrain `typeof()` rather than `class()`.
+#'
+#' @examples
+#' t_posixct <- t_any |> classed(c("POSIXct", "POSIXt"), inherits = "all")
+#' obj_is_type(as.POSIXct("2020-01-01"), t_posixct)
+#' obj_is_type(as.Date("2020-01-01"), t_posixct)
+#' 
+#' @export
+classed <- function(type, classes, inherits = "all") {
+  assert_is_type(type)
+  assert_is_chr(classes, complete = TRUE)
+  if (rlang::is_empty(classes)) {
+    abort_bad_input(format_styled("{.arg classes} must be non-empty."))
+  }
+  assert_match(inherits, c("all", "any"))
+
+  type |> add_trait(classed_trait(classes = unique(classes), inherits = inherits))
+}
+
+classed_trait <- new_trait("classed", params = c("classes", "inherits"))
+
+method(trait_test, classed_trait) <- function(trait, obj) {
+  if (trait@inherits == "any") {
+    inherits(obj, trait@classes)
+  } else {
+   all(map_lgl(trait@classes, \(cls) inherits(obj, cls)))
+  }
+}
+
+method(trait_diagnose, classed_trait) <- function(trait, obj, obj_name) {
+  classes <- trait@classes
+
+  if (trait@inherits == "all") {
+    missing <- classes[!map_lgl(classes, \(cls) inherits(obj, cls))]
+    return(c(
+      i = format_styled(
+        "{.arg {obj_name}} must inherit all classes: <<oxford(backtick(classes))>>."
+      ),
+      x = format_styled(
+        "{.arg {obj_name}} does not inherit from <<oxford(backtick(missing))>>."
+      )
+    ))
+  }
+
+  c(
+    i = format_styled(
+      "{.arg {obj_name}} must inherit from at least one of classes: ",
+      "<<oxford(backtick(classes), last = ' or ')>>."
+    ),
+    x = format_styled(
+      "{.arg {obj_name}} has class {.cls <<class(obj)>>}."
+    )
+  )
+}
+
+method(trait_describe, classed_trait) <- function(trait, obj_name) {
+  classes <- trait@classes
+  inherit_mode <- trait@inherits
+
+  if (inherit_mode == "all" || length(classes) == 1L) {
+    format_styled("{.arg {obj_name}} inherits from class <<oxford(backtick(classes))>>.")
+  } else {
+    format_styled(
+      "{.arg {obj_name}} inherits from at least one of classes: ",
+      "<<oxford(backtick(classes), last = ' or ')>>."
+    )
+  }
+}
+
 # bounded ----------------------------------------------------------------------
 
 #' Constrain the upper and lower bounds of a type
