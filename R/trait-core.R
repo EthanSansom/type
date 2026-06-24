@@ -1,6 +1,6 @@
 # sized ------------------------------------------------------------------------
 
-#' Constrain the size of a type
+#' Check size
 #'
 #' @description
 #' 
@@ -50,7 +50,7 @@ method(trait_describe, sized_trait) <- function(trait, obj_name) {
 
 # bare_typed -------------------------------------------------------------------
 
-#' Constrain the `typeof()` of a type
+#' Check `typeof()`
 #'
 #' @description
 #' 
@@ -158,7 +158,7 @@ method(trait_describe, bare_typed_trait) <- function(trait, obj_name) {
 
 # classed ----------------------------------------------------------------------
 
-#' Constrain the `class()` of a type
+#' Check `class()`
 #'
 #' @description
 #' 
@@ -263,7 +263,7 @@ method(trait_describe, classed_trait) <- function(trait, obj_name) {
 
 # bounded ----------------------------------------------------------------------
 
-#' Constrain the upper and lower bounds of a type
+#' Check upper and lower bounds
 #'
 #' @description
 #' 
@@ -428,6 +428,65 @@ bounds_label <- function(left, right, left_open, right_open) {
   } else {
     if (right_open) glue::glue("below {right}") else glue::glue("equal to or below {right}")
   }
+}
+
+# contains ---------------------------------------------------------------------
+
+#' Check that object is a superset
+#'
+#' @description
+#'
+#' `contains()` returns a copy of `type` that requires objects to contain all
+#' elements of `values`, checked via [vctrs::vec_in()].
+#'
+#' @param type 
+#' 
+#' A type.
+#' 
+#' @param values 
+#' 
+#' A non-empty, non-list vector of values that objects must contain.
+#'
+#' @returns 
+#' 
+#' A copy of `type` with an additional constraint that objects contain 
+#' all elements of `values`.
+#'
+#' @seealso [sized()] to constrain the number of elements rather than their values.
+#'
+#' @examples
+#' t_rgb <- t_chr |> contains(c("r", "g", "b"))
+#' obj_inspect_type(c("r", "g", "b", "a"), t_rgb)
+#' obj_inspect_type(c("r", "g"), t_rgb)
+#'
+#' @export
+contains <- function(type, values) {
+  assert_is_type(type)
+  assert_is_simple_vector(values)
+  if (vctrs::vec_size(values) == 0L) {
+    abort_bad_input("{.arg values} must be non-empty.")
+  }
+
+  if (!is_bare_vector_type(type)) {
+    type <- type |> add_trait(vector_trait())
+  }
+
+  type |>
+    add_trait(contains_trait(values = unique(values)))
+}
+
+contains_trait <- new_trait("contains", params = c("values"))
+
+method(trait_test, contains_trait) <- function(trait, obj) {
+  test_vec_set_relation(obj, trait@values, "all_of")
+}
+
+method(trait_diagnose, contains_trait) <- function(trait, obj, obj_name) {
+  diagnose_vec_set_relation(obj, trait@values, "all_of", obj_name)
+}
+
+method(trait_describe, contains_trait) <- function(trait, obj_name) {
+  describe_vec_set_relation(obj_name, trait@values, "all_of")
 }
 
 # vector -----------------------------------------------------------------------
