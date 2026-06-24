@@ -190,7 +190,7 @@ bare_typed <- function(type, typeof) {
     "environment", "symbol", "pairlist", "language", "expression", "S4", "closure",
     "special", "builtin", "externalptr", "weakref", "promise", "char", "bytecode"
   )
-  if (typeof %notin% valid_typeof) {
+  if (!(typeof %in% valid_typeof)) {
     abort_bad_input(
       format_styled("{.arg typeof} must be a valid R type, not {.val {typeof}}.")
     )

@@ -1,3 +1,5 @@
+#nocov start
+
 context_env <- rlang::new_environment()
 
 context_local <- function(name, frame = rlang::caller_env()) {
@@ -30,3 +32,5 @@ context_assert <- function(
 context_abort <- function(error_message, error_call = rlang::caller_env()) {
   abort_bad_input(error_message, error_call = error_call)
 }
+
+#nocov end

@@ -1,3 +1,5 @@
+#nocov start
+
 # assert ------------------------------------------------------------------------
 
 assert_is_type <- function(
@@ -391,3 +393,5 @@ abort_internal <- function(message, error_call = rlang::caller_env()) {
     .internal = TRUE
   )
 }
+
+#nocov end

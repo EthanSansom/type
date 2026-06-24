@@ -1,3 +1,5 @@
+#nocov start
+
 .LGL <- logical(1)
 .INT <- integer(1)
 .DBL <- double(1)
@@ -52,3 +54,5 @@ drop_at <- function(x, at) {
 list_flatten <- function(x) {
   do.call(c, x)
 }
+
+#nocov end
