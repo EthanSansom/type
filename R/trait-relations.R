@@ -83,39 +83,66 @@ has_relation <- function(type, relation) {
   type |> add_trait(relation$trait)
 }
 
-# same_classed -----------------------------------------------------------------
-
-#' Require elements to have the same class
+#' Set between-element type constraints
 #'
 #' @description
-#' 
-#' `same_classed()` constrains a set of values to share the same class. Its
-#' behaviour depends on context:
 #'
-#' - Inside [has_relation()]: requires that the selected elements or attributes of an object all have the same class.
-#' - Inside [typed()]: requires that the specified function arguments all have the same class at call time.
-#' 
+#' Relations constrain how a set of values must relate to one another. Each
+#' relation function's behaviour depends on context:
+#'
+#' - Inside [has_relation()]: constrains selected elements or attributes of an object.
+#' - Inside [typed()]: constrains the specified function arguments at call time.
+#'
+#' The following relations are provided:
+#'
+#' - `same_sized()`: all values must share the same size, checked via [vctrs::vec_size()].
+#' - `same_classed()`: all values must share the same class.
+#' - `recyclable()`: all values must be size 1 or share the same size.
+#' - `exclusive()`: exactly one value must be non-`NULL` (in [has_relation()]) or supplied (in [typed()]).
+#'
 #' @param ...
-#' 
+#'
 #' Inside [has_relation()], one or more selectors (e.g. [on_elm()],
-#'[on_elms()], [on_attr()], [on()]).
-#' 
-#' Inside [typed()], one or more argument names.
+#' [on_elms()], [on_attr()], [on()]).
+#'
+#' Inside [typed()], one or more arguments.
+#'
+#' @seealso [has_relation()] to attach a relation to a type, [typed()] for typed function construction.
 #'
 #' @examples
-#' # Require that elements `[[1]]` and `[[2]]` share a class
+#' # Require elements be the same size
+#' t <- t_any |> has_relation(same_sized(on_elm("a"), on_elm("b")))
+#' obj_inspect_type(list(a = 1:3, b = 1:3), t, obj_name = "obj")
+#' obj_inspect_type(list(a = 1:3, b = 1:2), t, obj_name = "obj")
+#'
+#' # Require elements to share a class
 #' t <- t_any |> has_relation(same_classed(on_elm(1L), on_elm(2L)))
-#' obj_inspect_type(list(1L, 2L), t) 
+#' obj_inspect_type(list(1L, 2L), t)
 #' obj_inspect_type(list(1L, "a"), t)
 #'
-#' # Require that arguments `x` and `y` share a class
-#' f <- typed(same_classed(x, y), function(x, y) { NULL })
-#' f(1L, 2L)
-#' try(f(1L, "a"))
-#' 
-#' @seealso [typed()] for typed function construction, [has_relation()] for
-#' adding between-element type constraints.
+#' # Require elements be size 1 or the same size
+#' t <- t_any |> has_relation(recyclable(on_elm("x"), on_elm("y")))
+#' obj_inspect_type(list(x = 1L, y = 1:3), t)
+#' obj_inspect_type(list(x = 1:2, y = 1:3), t)
 #'
+#' # Require that exactly one element must be non-NULL or supplied
+#' t <- t_any |> has_relation(exclusive(on_elm("x"), on_elm("y")))
+#' obj_inspect_type(list(x = 1L, y = NULL), t)
+#' obj_inspect_type(list(x = 1L, y = 1L), t)
+#'
+#' f <- typed(
+#'   exclusive(x, y),
+#'   function(x = optional(t_any), y = optional(t_any)) NULL
+#' )
+#' f(x = 1L)
+#' try(f(x = 1L, y = "a"))
+#'
+#' @name relations
+NULL
+
+# same_classed -----------------------------------------------------------------
+
+#' @rdname relations
 #' @export
 same_classed <- function(...) {
   if (context_active("has_relation")) {
@@ -222,38 +249,7 @@ inline_assert_same_classed <- function(..., error_call = rlang::caller_env()) {
 
 # same_sized -------------------------------------------------------------------
 
-#' Require elements to be the same size
-#'
-#' @description
-#'
-#' `same_sized()` constrains a set of values to share the same size, checked
-#' via [vctrs::vec_size()]. Its behaviour depends on context:
-#'
-#' - Inside [has_relation()]: requires that the selected elements or attributes of an object all have the same size.
-#' - Inside [typed()]: requires that the specified function arguments all have the same size at call time.
-#'
-#' @param ...
-#'
-#' Inside [has_relation()], one or more selectors (e.g. [on_elm()],
-#' [on_elms()], [on_attr()], [on()]).
-#'
-#' Inside [typed()], one or more argument names.
-#'
-#' @examples
-#' # Require that elements `[["a"]]` and `[["b"]]` are the same size
-#' t <- t_any |> has_relation(same_sized(on_elm("a"), on_elm("b")))
-#' obj_inspect_type(list(a = 1:3, b = 1:3), t, obj_name = "obj")
-#' obj_inspect_type(list(a = 1:3, b = 1:2), t, obj_name = "obj")
-#' obj_inspect_type(list(1:2, b = 1:2), t, obj_name = "obj")
-#'
-#' # Require that arguments `x` and `y` are the same size
-#' f <- typed(same_sized(x, y), function(x = t_int, y = t_int) { NULL })
-#' f(1:3, 1:3)
-#' try(f(1:3, 1:2))
-#'
-#' @seealso [typed()] for typed function construction, [has_relation()] for
-#' adding between-element type constraints.
-#'
+#' @rdname relations
 #' @export
 same_sized <- function(...) {
   if (context_active("has_relation")) {
@@ -377,43 +373,139 @@ inline_assert_same_sized <- function(..., error_call = rlang::caller_env()) {
   )
 }
 
+# recycleable ------------------------------------------------------------------
+
+#' @rdname relations
+#' @export
+recyclable <- function(...) {
+  if (context_active("has_relation")) {
+    return(recyclable_elms(...))
+  }
+  if (context_active("typed")) {
+    return(recyclable_args(...))
+  }
+  context_abort(format_styled(
+    "Must be used while defining a relation, ",
+    "e.g. in {.fn has_relation} or {.fn typed}."
+  ))
+}
+
+recyclable_elms <- function(..., error_call = rlang::caller_env()) {
+  context_local("relation")
+  selectors <- flatten_selectors(list(...), error_call = error_call)
+  if (length(selectors) == 0L) {
+    abort_bad_input(
+      format_styled("Must supply at least one selector to {.arg ...}."),
+      error_call = error_call
+    )
+  }
+  new_elms_relation(recyclable_trait(selectors = selectors))
+}
+
+recyclable_args <- function(..., error_call = rlang::caller_env()) {
+  dots <- rlang::enexprs(...)
+  check_relation_dots(dots, error_call = error_call)
+  args <- as.character(dots)
+  new_args_relation(
+    call = rlang::call2("inline_assert_recyclable", !!!dots, .ns = "type"),
+    args = args,
+    description = format_styled("{oxford(backtick(args))} must be recyclable.")
+  )
+}
+
+recyclable_trait <- new_trait("recyclable", params = c("selectors"))
+
+method(trait_test, recyclable_trait) <- function(trait, obj) {
+  values <- on_obj_values(obj, trait@selectors)
+  if (!all(map_lgl(values, vctrs::obj_is_vector))) {
+    return(FALSE)
+  }
+  
+  sizes <- map_int(values, vctrs::vec_size)
+  scalar <- sizes == 1L
+  length(unique(sizes[!scalar])) <= 1
+}
+
+method(trait_diagnose, recyclable_trait) <- function(trait, obj, obj_name) {
+  values <- on_obj_values(obj, trait@selectors)
+  labels <- on_obj_labels(obj, obj_name, trait@selectors)
+
+  is_error <- map_lgl(values, rlang::is_error)
+  if (any(is_error)) {
+    bad_at <- which.max(is_error)
+    return(c(
+      x = format_styled("{labels[[bad_at]]} must return a value, not raise an error.")
+    ))
+  }
+
+  is_vector <- map_lgl(values, vctrs::obj_is_vector)
+  if (!all(is_vector)) {
+    bad_at <- which.min(is_vector)
+    return(c(
+      x = format_styled("{labels[[bad_at]]} must be a vector, not <<fmt_r_type(values[[bad_at]])>>.")
+    ))
+  }
+
+  sizes <- map_int(values, vctrs::vec_size)
+  scalar <- sizes == 1L
+  bad_at <- which(!scalar)[which.max(sizes[!scalar] != sizes[!scalar][[1]])]
+  c(
+    i = format_styled("{labels[[1]]} and {labels[[bad_at]]} must be recyclable."),
+    x = format_styled(
+      "{labels[[1]]} (size {sizes[[1]]}) and {labels[[bad_at]]} (size {sizes[[bad_at]]}) have incompatible sizes."
+    )
+  )
+}
+
+method(trait_describe, recyclable_trait) <- function(trait, obj_name) {
+  descriptions <- map_chr(
+    trait@selectors, 
+    \(selector) selector@describer(obj_name, NULL)
+  )
+  format_styled("{str_upper1(oxford(descriptions))} are recyclable.")
+}
+
+#' @rdname inlined-functions
+#' @export
+inline_assert_recyclable <- function(..., error_call = rlang::caller_env()) {
+  labels <- backtick(as.character(rlang::enexprs(...)))
+  dots <- list(...)
+
+  sizes <- map_int(dots, \(arg) {
+    if (vctrs::obj_is_vector(arg)) vctrs::vec_size(arg) else NA_integer_
+  })
+
+  if (anyNA(sizes)) {
+    bad_at <- which.max(is.na(sizes))
+    abort_mistyped_arg(
+      c(
+        format_styled("{qty(labels)}Argument{?s} {oxford(labels)} must be {?a vector/vectors}."),
+        x = format_styled("{labels[[bad_at]]} is <<fmt_r_type(dots[[bad_at]])>>.")
+      ),
+      error_call = error_call
+    )
+  }
+
+  scalar <- sizes == 1L
+  if (length(unique(sizes[!scalar])) <= 1) {
+    return(invisible())
+  }
+
+  bad_at <- which(!scalar)[which.max(sizes[!scalar] != sizes[!scalar][[1]])]
+  abort_mistyped_arg(
+    c(
+      format_styled("{qty(labels)}Argument{?s} {oxford(labels)} must be recyclable."),
+      x = format_styled(
+        "{labels[[1]]} (size {sizes[[1]]}) and {labels[[bad_at]]} (size {sizes[[bad_at]]}) are incompatible sizes."
+      )
+    ),
+    error_call = error_call
+  )
+}
+
 # exlusive ---------------------------------------------------------------------
 
-#' Require exactly one element or argument to be supplied
-#'
-#' @description
-#'
-#' `exclusive()` constrains a set of values so that exactly one is non-`NULL`
-#' or non-missing. Its behaviour depends on context:
-#'
-#' - Inside [has_relation()]: requires that exactly one of the selected elements or attributes of an object is non-`NULL`.
-#' - Inside [typed()]: requires that exactly one of the function arguments is supplied.
-#' 
-#' @param ...
-#'
-#' Inside [has_relation()], one or more selectors (e.g. [on_elm()],
-#' [on_elms()], [on_attr()], [on()]).
-#'
-#' Inside [typed()], one or more argument names.
-#'
-#' @examples
-#' # Require that exactly one of elements `[["x"]]` and `[["y"]]` is non-NULL
-#' t <- t_any |> has_relation(exclusive(on_elm("x"), on_elm("y")))
-#' obj_inspect_type(list(x = 1L, y = NULL), t)
-#' obj_inspect_type(list(x = NULL, y = NULL), t)
-#' obj_inspect_type(list(x = 1L, y = 1L), t)
-#'
-#' # Require that either `x` or `y` is supplied
-#' f <- typed(
-#'   exclusive(x, y),
-#'   function(x = optional(t_any), y = optional(t_any)) { NULL }
-#' )
-#' f(x = 1L)
-#' try(f())
-#' try(f(x = 1L, y = "a"))
-#'
-#' @seealso [typed()] for typed function construction, [has_relation()] for adding between-element type constraints.
-#' 
+#' @rdname relations
 #' @export
 exclusive <- function(...) {
   if (context_active("has_relation")) {

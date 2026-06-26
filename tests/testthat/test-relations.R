@@ -184,6 +184,52 @@ test_that("same_classed() works as expected within argument type checks", {
   expect_error(f(factor("a"), 1:3), class = "type_error_mistyped_arg")
 })
 
+# recyclable -------------------------------------------------------------------
+
+test_that("recyclable() works as expected within object type checks", {
+  t <- t_any |> has_relation(recyclable(on_elm("x"), on_elm("y")))
+
+  expect_true(obj_is_type(list(x = 1L, y = 1:3), t))
+  expect_true(obj_is_type(list(x = 1:3, y = 1L), t))
+  expect_true(obj_is_type(list(x = 1:3, y = 1:3), t))
+  expect_false(obj_is_type(list(x = 1:2, y = 1:3), t))
+  expect_false(obj_is_type(list(x = mean, y = 1:3), t))
+
+  expect_no_error(obj_assert_type(list(x = 1L, y = 1:4), t))
+  expect_error(
+    obj_assert_type(list(x = 1:2, y = 1:3), t),
+    class = "type_error_mistyped_obj"
+  )
+})
+
+test_that("recyclable() handles three or more selectors", {
+  t <- t_any |> has_relation(recyclable(on_elms(c("x", "y", "z"))))
+
+  expect_true(obj_is_type(list(x = 1L, y = 1L, z = 1:4), t))
+  expect_true(obj_is_type(list(x = 1L, y = 1:4, z = 1:4), t))
+  expect_false(obj_is_type(list(x = 1L, y = 1:3, z = 1:4), t))
+})
+
+test_that("recyclable() works as expected within argument type checks", {
+  f <- typed(recyclable(x, y), function(x = t_any, y = t_any) NULL)
+
+  expect_no_error(f(1L, 1:3))
+  expect_no_error(f(1:3, 1:3))
+
+  expect_error(f(1:2, 1:3), class = "type_error_mistyped_arg")
+  expect_error(f(mean, 1:3), class = "type_error_mistyped_arg")
+})
+
+test_that("recyclable() description and diagnosis are as expected", {
+  skip_on_covr()
+  
+  t <- t_any |> has_relation(recyclable(on_elms(c("x", "y"))))
+
+  expect_snapshot(obj_inspect_type(list(x = 1L, y = 1:3), t))
+  expect_snapshot(obj_inspect_type(list(x = 1:2, y = 1:3), t))
+  expect_snapshot(obj_inspect_type(list(x = mean, y = 1:3), t))
+})
+
 # exclusive --------------------------------------------------------------------
 
 test_that("exclusive() works as expected within object type checks", {
