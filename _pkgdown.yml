@@ -16,7 +16,7 @@ reference:
   - title: Traits
     desc: >
       Traits are functions which add an additional constraint to a type,
-      for example the expected size of an object or its class.
+      for example the expected size of an object or its expected class.
     contents:
       - bare_typed
       - classed
@@ -28,6 +28,7 @@ reference:
       - contains
       - same_as
       - disjoint_to
+      - setequal_to
 
   - title: Element Typing
     contents:
