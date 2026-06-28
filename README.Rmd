@@ -14,11 +14,12 @@ knitr::opts_chunk$set(
 )
 ```
 
-# type
+# type <img src="man/figures/logo.png" align="right" height="120" alt="" />
 
 <!-- badges: start -->
 [![Codecov test coverage](https://codecov.io/gh/EthanSansom/type/graph/badge.svg)](https://app.codecov.io/gh/EthanSansom/type)
 [![R-CMD-check](https://github.com/EthanSansom/type/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/EthanSansom/type/actions/workflows/R-CMD-check.yaml)
+[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
 
 {type} provides a lightweight type system for R, meant for users to quickly and

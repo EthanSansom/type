@@ -1,13 +1,15 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# type
+# type <img src="man/figures/logo.png" align="right" height="120" alt="" />
 
 <!-- badges: start -->
 
 [![Codecov test
 coverage](https://codecov.io/gh/EthanSansom/type/graph/badge.svg)](https://app.codecov.io/gh/EthanSansom/type)
 [![R-CMD-check](https://github.com/EthanSansom/type/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/EthanSansom/type/actions/workflows/R-CMD-check.yaml)
+[![Lifecycle:
+experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
 
 {type} provides a lightweight type system for R, meant for users to
@@ -310,7 +312,7 @@ print(str_remove)
 #> {
 #>     base::gsub(x = x, pattern = pattern, replacement = "", fixed = fixed)
 #> }
-#> <environment: 0x12102d318>
+#> <environment: 0x120be0f18>
 #> Arguments:
 #> • `x` is a bare <character>.
 #> • `pattern` is a bare <character>.
@@ -379,7 +381,7 @@ print(safe_any)
 #> {
 #>     base::any(..., na.rm = na.rm)
 #> }
-#> <environment: 0x12102d318>
+#> <environment: 0x120be0f18>
 #> Arguments:
 #> • Each element of `...` is a bare <logical>.
 #> • `na.rm` is a bare <logical>.
@@ -422,5 +424,5 @@ untyped(safe_any)
 #> {
 #>     base::any(..., na.rm = na.rm)
 #> }
-#> <environment: 0x12102d318>
+#> <environment: 0x120be0f18>
 ```

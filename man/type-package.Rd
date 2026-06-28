@@ -6,6 +6,8 @@
 \alias{type-package}
 \title{type: Runtime Type Validation for Functions and Objects}
 \description{
+\if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
+
 Provides a lightweight type system for 'R'. Types are represented as composable sets of predicates which a valid object must satisfy. Variables may be declared with a type, which is checked everytime the variable is assigned to. Additionally, function arguments and return values may be annotated with a type, which is validated each time the function is called.
 }
 \seealso{

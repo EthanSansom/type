@@ -1,0 +1,73 @@
+url: ~
+template:
+  bootstrap: 5
+
+reference:
+  - title: Object and Function Typing
+    contents:
+      - typed
+      - untyped
+      - "%:%"
+      - const
+      - optional
+      - maybe
+      - last_type
+
+  - title: Traits
+    desc: >
+      Traits are functions which add an additional constraint to a type,
+      for example the expected size of an object or its class.
+    contents:
+      - bare_typed
+      - classed
+      - sized
+      - complete
+      - unduplicated
+      - bounded
+      - within
+      - contains
+      - same_as
+      - disjoint_to
+
+  - title: Element Typing
+    contents:
+      - has
+      - starts_with("on")
+
+  - title: Relations
+    desc: >
+      Relations are special traits which define between-element type constraints,
+      for example that all elements of an object are the same size. These may
+      also be used to define between-argument constraints in typed functions.
+    contents:
+      - has_relation
+      - same_sized
+      - same_classed
+      - exclusive
+      - recyclable
+ 
+  - title: Type Construction
+    contents:
+      - type_union
+      - list_type
+      - list_of_type
+      - dataframe_type
+      - is_type
+      - is_type_union
+
+  - title: Object Type Validation
+    contents:
+      - obj_is_type
+      - obj_inspect_type
+      - obj_assert_type
+
+  - title: Base Types
+    contents:
+      - starts_with("t_")
+
+  - title: Inlined Helpers
+    desc: >
+      These functions are inlined into typed functions and are not meant for 
+      interactive use.
+    contents:
+      - starts_with("inline_")
