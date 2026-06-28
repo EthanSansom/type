@@ -19,76 +19,26 @@ You can install the development version of {type} from
 pak::pak("EthanSansom/type")
 ```
 
-## Types
+## Typed Objects
 
-A “type” in {type} defines a set of restrictions used to validate other
-objects in R. For example, the type `t_bool` (for “boolean type”)
-requires that an object:
-
-- Is a bare logical vector.
-- Is scalar (size 1).
-- Contains no `NA` values.
-
-In other words, an object of type `t_bool` must be either `TRUE` or
-`FALSE`.
-
-When a type is printed, it displays the requirements that an object of
-that type must meet:
+{type} provides a collection of built-in types, such as `t_int`
+(integer) and `t_bool` (boolean), which may be used to annotate objects,
+function arguments, and return values.
 
 ``` r
 
-print(t_bool)
-#> <type>
-#> • `<object>` is a bare <logical>.
-#> • `<object>` is size 1.
-#> • `<object>` contains no missing values.
+t_int %:% x(10L)
 ```
 
-[`obj_is_type()`](https://ethansansom.github.io/type/reference/obj-type.md)
-may be used to test whether an object meets the requirements of a given
-type.
+A variable’s type may be declared using the `%:%` operator, which
+constrains the values which may be assigned to it.
 
 ``` r
 
-obj_is_type(10L, t_bool)
-#> [1] FALSE
-obj_is_type(TRUE, t_bool)
-#> [1] TRUE
-```
+# Assigning another integer to `x` is okay
+x <- 1:3
 
-For additional information on why a type test failed or succeeded, use
-[`obj_inspect_type()`](https://ethansansom.github.io/type/reference/obj-type.md)
-to print a diagnostic message.
-
-``` r
-
-obj_inspect_type(NA, t_bool)
-#> Object `NA` does not have the expected type.
-#> ✔ `NA` is a bare <logical>.
-#> ✔ `NA` is size 1.
-#> ℹ `NA` must not contain missing elements.
-#> ✖ `NA` is NA at location `1`.
-```
-
-A variable may be restricted to a given type using the `%:%` operator:
-
-``` r
-
-# Require that `x` is an integer, and initialize `x` to `1:5`
-t_int %:% x(1:5)
-x 
-#> [1] 1 2 3 4 5
-```
-
-Once a variable is typed, it may be re-assigned to a variable of the
-same type, but cannot be assigned a different type:
-
-``` r
-
-x <- 2L
-x
-#> [1] 2
-
+# But non-integer assignment raises an error
 x <- "A"
 #> Error:
 #> ! Attempted to assign a mistyped value to `x`.
@@ -96,53 +46,9 @@ x <- "A"
 #> ℹ Run `last_type()` to get the expected type.
 ```
 
-Alternatively,
-[`obj_assert_type()`](https://ethansansom.github.io/type/reference/obj-type.md)
-may be used to interactively enforce the type of an object:
-
-``` r
-
-obj_assert_type(data.frame(x = 1:3), t_int)
-#> Error in `obj_assert_type()`:
-#> ! Object `data.frame(x = 1:3)` is mistyped.
-#> ℹ `data.frame(x = 1:3)` must be a bare <integer>.
-#> ✖ `data.frame(x = 1:3)` is a S3 object of class <data.frame>.
-#> ℹ Run `last_type()` to get the expected type.
-```
-
-Both `%:%`,
-[`obj_assert_type()`](https://ethansansom.github.io/type/reference/obj-type.md),
-and other type validation functions in {type} raise {rlang} errors of
-class `<type_error_mistyped>` when an object is mistyped.
-
-### Base Types
-
-{type} includes the following base types for common R objects:
-
-| Object        | Matches                                   |
-|---------------|-------------------------------------------|
-| `t_any`       | Any object                                |
-| `t_null`      | `NULL`                                    |
-| `t_list`      | A list                                    |
-| `t_env`       | An environment                            |
-| `t_fun`       | A function                                |
-| `t_vec`       | A {vctrs} style vector                    |
-| `t_num`       | A numeric (e.g. integer or double) vector |
-| `t_lgl`       | A bare logical vector                     |
-| `t_bool`      | A single `TRUE` or `FALSE`                |
-| `t_int`       | A bare integer vector                     |
-| `t_dbl`       | A bare double vector                      |
-| `t_chr`       | A bare character vector                   |
-| `t_string`    | A single non-`NA` string                  |
-| `t_dataframe` | A data frame                              |
-| `t_factor`    | A factor                                  |
-| `t_date`      | A `Date`                                  |
-| `t_posixct`   | A `POSIXct` datetime                      |
-
-### Traits
-
-Every type is built using traits, which add restrictions to a type. For
-example, the base `t_string` type is built using the
+Every type in {type} is composed of traits, functions which add
+additional restrictions to a type. For example, the `t_string` type is
+built from the
 [`sized()`](https://ethansansom.github.io/type/reference/sized.md) and
 [`complete()`](https://ethansansom.github.io/type/reference/complete.md)
 traits:
@@ -155,23 +61,37 @@ t_string <- t_chr |> # A character vector
   complete()         # Which is non-missing
 ```
 
-Traits compose naturally using the `|>` operator, making it easy to
-define custom types.
+The type of any object can be checked using
+[`obj_is_type()`](https://ethansansom.github.io/type/reference/obj-type.md),
+[`obj_inspect_type()`](https://ethansansom.github.io/type/reference/obj-type.md),
+and
+[`obj_assert_type()`](https://ethansansom.github.io/type/reference/obj-type.md):
 
 ``` r
 
-t_probability <- t_dbl |> bounded(0, 1, "[]")
+# Returns TRUE or FALSE
+obj_is_type(NA_character_, t_string)
+#> [1] FALSE
 
-obj_inspect_type(0.5, t_probability)
-#> Object `0.5` has the expected type.
-#> ✔ `0.5` is a bare <double>.
-#> ✔ `0.5` is bounded by [0, 1].
+# Prints a diagnostic message
+obj_inspect_type(NA_character_, t_string)
+#> Object `NA_character_` does not have the expected type.
+#> ✔ `NA_character_` is a bare <character>.
+#> ✔ `NA_character_` is size 1.
+#> ℹ `NA_character_` must not contain missing elements.
+#> ✖ `NA_character_` is NA at location `1`.
+
+# Raises an error (on failure) or returns `NULL` (on success)
+obj_assert_type(NA_character_, t_string)
+#> Error in `obj_assert_type()`:
+#> ! Object `NA_character_` is mistyped.
+#> ℹ `NA_character_` must not contain missing elements.
+#> ✖ `NA_character_` is NA at location `1`.
+#> ℹ Run `last_type()` to get the expected type.
 ```
 
-### Structural Types
-
-{type} defines a small dialect for setting type constraints on parts of
-an object using
+To support more complex type definitions, {type} provides a small
+dialect for setting type constraints on parts of an object using
 [`on()`](https://ethansansom.github.io/type/reference/on.md) selector
 functions,
 [`has()`](https://ethansansom.github.io/type/reference/has.md), and
@@ -201,194 +121,70 @@ These are useful for building complex types from a simple set of traits.
 
 ``` r
 
-t_coordinates <- t_list |>
-  has(on(names), t_chr |> same_as(c("lat", "lon"))) |>
-  has(on_elm("lat"), t_dbl |> bounded(-90, 90)) |>
-  has(on_elm("lon"), t_dbl |> bounded(-180, 180)) |>
-  has_relation(same_sized(on_elm("lat"), on_elm("lon")))
+t_point <- t_list |>
+  has(on(names), t_chr |> setequal_to(c("x", "y"))) |>
+  has(on_elm("x"), t_int |> complete()) |>
+  has(on_elm("y"), t_int |> complete()) |>
+  has_relation(same_sized(on_elms(c("x", "y"))))
  
-good <- list(lat = c(51.5, 40.7), lon = c(-0.1, -74.0))
-bad <- list(lat = c(51.5, 200.0), lon = c(-0.1, -74.0, 0.0))
-worst <- list(x = "A")
+good <- list(x = 1:2, y = 3:4)
+bad <- list(x = c(1L, NA), y = c(0L, 0L))
  
-obj_is_type(good, t_coordinates)
+obj_is_type(good, t_point)
 #> [1] TRUE
-obj_inspect_type(bad, t_coordinates)
+obj_inspect_type(bad, t_point)
 #> Object `bad` does not have the expected type.
 #> ✔ `bad` is a bare <list>.
 #> ✔ `names(bad)` is a bare <character>.
-#> ✔ `names(bad)` is the same as: `c("lat", "lon")`.
-#> ℹ `bad[["lat"]]` must be bounded by [-90, 90].
-#> ✖ `bad[["lat"]]` is out of bounds at location `2`.
-obj_inspect_type(worst, t_coordinates)
-#> Object `worst` does not have the expected type.
-#> ✔ `worst` is a bare <list>.
-#> ℹ `names(worst)` must be: `c("lat", "lon")`.
-#> ✖ `names(worst)` is missing 2 elements: `c("lat", "lon")`.
-#> ✖ `names(worst)` contains 1 unexpected element: `"x"`.
-```
-
-[`list_type()`](https://ethansansom.github.io/type/reference/type-constructors.md)
-and
-[`dataframe_type()`](https://ethansansom.github.io/type/reference/type-constructors.md)
-provide a shorthand for typed containers:
-
-``` r
-
-t_survey <- dataframe_type(
-  id = t_int |> complete(), 
-  score = t_dbl |> bounded(0, 100)
-)
-print(t_survey)
-#> <type>
-#> • `<object>` inherits from class `data.frame`.
-#> • `names(<object>)` is a bare <character>.
-#> • `names(<object>)` is the same as: `c("id", "score")`.
-#> • `<object>[["id"]]` is a bare <integer>.
-#> • `<object>[["id"]]` contains no missing values.
-#> • `<object>[["score"]]` is a bare <double>.
-#> • `<object>[["score"]]` is bounded by [0, 100].
-```
-
-While
-[`list_of_type()`](https://ethansansom.github.io/type/reference/type-constructors.md)
-constructs the common case of a homogenous list type:
-
-``` r
-
-t_list_of_chr <- list_of_type(t_chr)
-
-obj_is_type(list("A", "B", "C"), t_list_of_chr)
-#> [1] TRUE
-obj_is_type(list("A", 2L, "C"), t_list_of_chr)
-#> [1] FALSE
-```
-
-### Constants
-
-A variable may be declared a constant using the
-[`const()`](https://ethansansom.github.io/type/reference/modifiers.md)
-modifier, in which case it’s value cannot be changed after assignment.
-
-``` r
-
-const(t_int) %:% z(1L)
-z <- 2L
-#> Error:
-#> ! Can't assign to the constant `z`.
-#> ℹ Run `last_type()` to get the expected type.
-```
-
-### Type Unions
-
-Two or more types may be combined into a *type union*, which requires
-that an object satisfy at least one of the types’ constraints.
-
-``` r
-
-t_rownames <- type_union(t_int, t_chr) |> complete()
-
-obj_is_type(FALSE, t_rownames)
-#> [1] FALSE
-obj_is_type(1:3, t_rownames)
-#> [1] TRUE
-obj_is_type(c("a", "b", "c"), t_rownames)
-#> [1] TRUE
-```
-
-Failed type union checks report the unmet requirement of each type in
-the union:
-
-``` r
-
-obj_inspect_type(NA_integer_, t_rownames)
-#> Object `NA_integer_` does not have the expected type.
-#> • Type option 1 of 2:
-#> ✔ `NA_integer_` is a bare <integer>.
-#> ℹ `NA_integer_` must not contain missing elements.
-#> ✖ `NA_integer_` is NA at location `1`.
-#> • Type option 2 of 2:
-#> ✖ `NA_integer_` must be a bare <character>, not a bare <integer>.
+#> ✔ `names(bad)` is setequal to: `c("x", "y")`.
+#> ℹ `bad[["x"]]` must not contain missing elements.
+#> ✖ `bad[["x"]]` is NA at location `2`.
 ```
 
 ## Typed Functions
 
 A typed function is declared using
-[`typed()`](https://ethansansom.github.io/type/reference/typed.md).
+[`typed()`](https://ethansansom.github.io/type/reference/typed.md):
 
 ``` r
 
-str_remove <- typed(function(
-  x = t_chr, 
-  pattern = t_string, 
-  fixed = t_bool %:% FALSE
-) {
-  base::gsub(x = x, pattern = pattern, replacement = "", fixed = fixed)
+safe_log <- typed(function(x = t_num, base = t_num %:% exp(1)) { 
+  base::log(x, base = base) 
 })
-print(str_remove)
+print(safe_log)
 #> <typed>
-#> function (x, pattern, fixed = FALSE) 
+#> function (x, base = exp(1)) 
 #> {
-#>     base::gsub(x = x, pattern = pattern, replacement = "", fixed = fixed)
+#>     base::log(x, base = base)
 #> }
-#> <environment: 0x11d98c518>
+#> <environment: 0x107a4a518>
 #> Arguments:
-#> • `x` is a bare <character>.
-#> • `pattern` is a bare <character>.
-#> • `pattern` is size 1.
-#> • `pattern` contains no missing values.
-#> • `fixed` is a bare <logical>.
-#> • `fixed` is size 1.
-#> • `fixed` contains no missing values.
+#> • `x` is a numeric vector.
+#> • `base` is a numeric vector.
 #> Returns:
 #> • `<result>` is an R object.
 ```
 
 Arguments without default values are annotated using a type
-(e.g. `x = t_chr`) and default values are provided using the `%:%`
+(e.g. `x = t_num`) and default values are provided using the `%:%`
 operator.
 
-When called, a typed function validates each of its typed arguments,
-raising an error if an argument is mistyped.
+When called, a typed function checks that its inputs are of the correct
+type and raises an error otherwise.
 
 ``` r
 
-str_remove("hello", pattern = "he")
-#> [1] "llo"
-str_remove("goodbye", pattern = NA_character_)
-#> Error in `str_remove()`:
-#> ! Argument `pattern` is mistyped.
-#> ℹ `pattern` must not contain missing elements.
-#> ✖ `pattern` is NA at location `1`.
+safe_log(10)
+#> [1] 2.302585
+safe_log("A")
+#> Error in `safe_log()`:
+#> ! Argument `x` is mistyped.
+#> ✖ `x` must be a numeric vector, not the string "A".
 #> ℹ Run `last_type()` to get the expected type.
 ```
 
-With
-[`last_type()`](https://ethansansom.github.io/type/reference/last_type.md),
-interactively debugging failed argument or object type checks is simple.
-
-``` r
-
-# What type was expected?
-t_expected <- last_type()
-print(t_expected)
-#> <type>
-#> • `<object>` is a bare <character>.
-#> • `<object>` is size 1.
-#> • `<object>` contains no missing values.
-
-# How does my input compare?
-pattern <- NA_character_
-obj_inspect_type(pattern, t_expected)
-#> Object `pattern` does not have the expected type.
-#> ✔ `pattern` is a bare <character>.
-#> ✔ `pattern` is size 1.
-#> ℹ `pattern` must not contain missing elements.
-#> ✖ `pattern` is NA at location `1`.
-```
-
-The return type of a function may be specified using the `returns`
-argument.
+In addition to argument types, the return type of a function may also be
+specified using the `returns` argument.
 
 ``` r
 
@@ -404,7 +200,7 @@ print(safe_any)
 #> {
 #>     base::any(..., na.rm = na.rm)
 #> }
-#> <environment: 0x11d98c518>
+#> <environment: 0x107a4a518>
 #> Arguments:
 #> • Each element of `...` is a bare <logical>.
 #> • `na.rm` is a bare <logical>.
@@ -415,43 +211,29 @@ print(safe_any)
 #> • `<result>` is size 1.
 ```
 
-Additionally, any relation compatible with
-[`has_relation()`](https://ethansansom.github.io/type/reference/has_relation.md)
-may also be used to define between-argument constraints. Here, we
-require that the `x`, `start`, and `stop` arguments of `safe_substr()`
-are either length-1 or the same length, using the
+Typed functions also support between-argument constaints, using any
+trait compatible with
+[`has_relation()`](https://ethansansom.github.io/type/reference/has_relation.md).
+For example, `na_string()` requires that arguments `x` and `na_to` are
+either the same size or are length-1, using the
 [`recyclable()`](https://ethansansom.github.io/type/reference/relations.md)
-relation:
+trait.
 
 ``` r
 
-safe_substr <- typed(
-  recyclable(x, start, stop),
-  function(x = t_chr, start = t_int, stop = t_int) {
-    base::substr(x, start, stop)
+na_string <- typed(
+  recyclable(x, na_to),
+  function(x = t_chr, na_to = t_chr |> complete()) {
+    x[is.na(x)] <- na_to
+    x
   },
-  returns = t_chr
+  returns = t_chr |> complete()
 )
 
-safe_substr(c("works", "fine"), 1L, 2L)
-#> [1] "wo" "fi"
-safe_substr(c("this", "wont", "work"), 1:2, 1:2)
-#> Error in `safe_substr()`:
-#> ! Arguments `x`, `start`, and `stop` must be recyclable.
-#> ✖ `x` (size 3) and `start` (size 2) are incompatible sizes.
-```
-
-Type checks may be removed from any typed function using
-[`untyped()`](https://ethansansom.github.io/type/reference/untyped.md),
-which is useful for bypassing argument validation in pre-validated or
-performance sensitive areas of code.
-
-``` r
-
-untyped(safe_any)
-#> function (..., na.rm = FALSE) 
-#> {
-#>     base::any(..., na.rm = na.rm)
-#> }
-#> <environment: 0x11d98c518>
+na_string(c("hi", NA, "bye"), na_to = "N/A")
+#> [1] "hi"  "N/A" "bye"
+na_string(c("hi", NA), na_to = character())
+#> Error in `na_string()`:
+#> ! Arguments `x` and `na_to` must be recyclable.
+#> ✖ `x` (size 2) and `na_to` (size 0) are incompatible sizes.
 ```
