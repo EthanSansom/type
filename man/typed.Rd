@@ -109,5 +109,5 @@ try(any2(TRUE, na.rm = "no"))
 
 }
 \seealso{
-\code{\link[=optional]{optional()}} and \code{\link[=maybe]{maybe()}} for argument modifications, \code{\link[=same_sized]{same_sized()}} and \code{\link[=same_classed]{same_classed()}} for between-argument constraints.
+\code{\link[=untyped]{untyped()}} for un-typing a function, \code{\link[=optional]{optional()}} and \code{\link[=maybe]{maybe()}} for argument modifications, \code{\link[=same_sized]{same_sized()}} and \code{\link[=same_classed]{same_classed()}} for between-argument constraints.
 }

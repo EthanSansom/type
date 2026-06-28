@@ -215,6 +215,22 @@ test_that("optional() and maybe() can be combined as expected", {
   expect_error(f("A"), class = "type_error_mistyped_arg")
 })
 
+# untyped ----------------------------------------------------------------------
+
+test_that("untyped() errors on invalid inputs", {
+  expect_error(untyped(10), class = "type_error_bad_input")
+  expect_no_error(untyped(mean))
+  expect_no_error(untyped(typed(function(x) { x })))
+})
+
+test_that("untyped() works as expected", {
+  f_usual <- function(x) { x }
+  f_typed <- typed(function(x = t_int) { x }, returns = t_int)
+
+  expect_identical(f_usual, untyped(f_typed))
+  expect_identical(untyped(f_typed)("A"), "A")
+})
+
 # printing ---------------------------------------------------------------------
 
 test_that("typed() prints as expected", {

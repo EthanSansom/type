@@ -90,7 +90,7 @@
 #'
 #' @return A typed function.
 #'
-#' @seealso [optional()] and [maybe()] for argument modifications, [same_sized()] and [same_classed()] for between-argument constraints.
+#' @seealso [untyped()] for un-typing a function, [optional()] and [maybe()] for argument modifications, [same_sized()] and [same_classed()] for between-argument constraints.
 #'
 #' @examples
 #' any2 <- typed(
@@ -199,6 +199,41 @@ typed <- function(..., returns = NULL) {
   attr(out, "args_relations") <- relations
   attr(out, "untyped_body") <- untyped_body
   out
+}
+
+#' Remove argument and return type validation from a typed function
+#'
+#' @description
+#' 
+#' `untyped()` removes argument and return types from a typed function declared
+#' via [typed()]. If `fun` is a non-typed function, then `fun` is returned
+#' as is.
+#' 
+#' @param fun A function to untype.
+#' 
+#' @returns A function, without [typed()] arguments or return values.
+#' 
+#' @examples
+#' foo <- typed(function(x = t_int) { x })
+#' print(foo)
+#' print(untyped(foo))
+#' 
+#' @export
+untyped <- function(fun) {
+  if (inherits(fun, "type_typed_function")) {
+    body(fun) <- attr(fun, "untyped_body")
+    attr(fun, "args_types") <- NULL
+    attr(fun, "returns_type") <- NULL
+    attr(fun, "args_relations") <- NULL
+    attr(fun, "untyped_body") <- NULL
+    return(unclass(fun))
+  } else if (is.function(fun)) {
+    return(fun)
+  }
+  abort_bad_input(format_styled(
+    "{.arg fun} must be a typed or bare function, ",
+    "not a <<fmt_r_type(fun)>>."
+  ))
 }
 
 # parse ------------------------------------------------------------------------
