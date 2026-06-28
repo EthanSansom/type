@@ -14,6 +14,7 @@ Provides a lightweight type system for 'R'. Types are represented as composable 
 Useful links:
 \itemize{
   \item \url{https://github.com/EthanSansom/type}
+  \item \url{https://ethansansom.github.io/type/}
   \item Report bugs at \url{https://github.com/EthanSansom/type/issues}
 }
 

@@ -79,7 +79,7 @@ The following base types are provided:\tabular{ll}{
    \code{t_env} \tab An environment \cr
    \code{t_fun} \tab A function \cr
    \code{t_vec} \tab A \link[vctrs:vctrs-package]{vctrs}-style vector \cr
-   \code{t_num} \tab An numeric (e.g. integer or double) vector \cr
+   \code{t_num} \tab A numeric (e.g. integer or double) vector \cr
    \code{t_lgl} \tab A bare logical vector \cr
    \code{t_bool} \tab A single \code{TRUE} or \code{FALSE} \cr
    \code{t_int} \tab A bare integer vector \cr
