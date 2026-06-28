@@ -9,8 +9,8 @@
 \alias{inline_abort_mistyped}
 \alias{inline_obj_type_validate}
 \alias{inlined-functions}
+\alias{inline_assert_type}
 \alias{inline_arg_assert_type}
-\alias{inline_result_assert_type}
 \alias{inline_dots_assert_type}
 \alias{inline_dotlist_assert_type}
 \title{Inlined helper functions}
@@ -26,15 +26,22 @@ inline_assert_exclusive(..., error_call = rlang::caller_env())
 inline_abort_mistyped(
   type,
   message,
-  what = c("obj", "arg"),
+  error_subclass = character(),
   error_call = rlang::caller_env()
 )
 
 inline_obj_type_validate(obj, obj_name, type)
 
-inline_arg_assert_type(arg, type, arg_name, error_call = rlang::caller_env())
+inline_assert_type(
+  obj,
+  obj_name,
+  type,
+  error_header,
+  error_subclass = character(),
+  error_call = rlang::caller_env()
+)
 
-inline_result_assert_type(value, type, error_call = rlang::caller_env())
+inline_arg_assert_type(arg, type, arg_name, error_call = rlang::caller_env())
 
 inline_dots_assert_type(..., .type, .error_call = rlang::caller_env())
 
@@ -55,16 +62,14 @@ inline_dotlist_assert_type(dots, type, error_call = rlang::caller_env())
 
 \item{arg_name}{An argument name to use in error messages.}
 
-\item{value}{A value to be checked.}
-
 \item{dots}{A list of dots to be checked.}
 }
 \description{
 These functions are inserted into \code{\link[=typed]{typed()}} functions and are not meant
 for external use. They are exported only to ensure that \code{\link[=typed]{typed()}} functions
-call the correct helper, e.g. \code{type::inline_result_assert_type()}, and
-not a globally defined function, e.g. \code{inline_result_assert_type()}.
+call the correct helper, e.g. \code{type::inline_assert_type()}, and
+not a globally defined function, e.g. \code{inline_assert_type()}.
 }
 \examples{
-try(inline_result_assert_type(10L, t_chr))
+try(inline_dots_assert_type(10L, t_chr))
 }

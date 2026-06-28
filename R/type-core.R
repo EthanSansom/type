@@ -144,7 +144,7 @@ on_load_core_types <- function() {
 
   t_env <<- t_any |> bare_typed("environment")
 
-  t_fun <<- t_any |> bare_typed("closure")
+  t_fun <<- t_any |> add_trait(function_trait())
 
   t_vec <<- t_any |> add_trait(vector_trait())
 
@@ -162,13 +162,13 @@ on_load_core_types <- function() {
 
   t_string <<- t_chr |> sized(1L) |> complete()
 
-  t_dataframe <- t_any |> classed("data.frame")
+  t_dataframe <<- t_any |> classed("data.frame")
 
-  t_factor <- t_any |> classed("factor")
+  t_factor <<- t_any |> classed("factor")
 
-  t_date <- t_any |> classed("Date")
+  t_date <<- t_any |> classed("Date")
 
-  t_posixct <- t_any |> classed("POSIXct")
+  t_posixct <<- t_any |> classed("POSIXct")
 
   t_dots <<- t_any |> endotted()
 }

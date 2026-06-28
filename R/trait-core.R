@@ -27,10 +27,8 @@ sized <- function(type, size) {
   assert_is_type(type)
   assert_is_count(size)
 
-  if (!is_bare_vector_type(type)) {
-    type <- type |> add_trait(vector_trait())
-  }
   type |>
+    add_trait(vector_trait(), skip = is_bare_vector_type) |>
     add_trait(sized_trait(size = size))
 }
 
@@ -70,10 +68,8 @@ method(trait_describe, sized_trait) <- function(trait, obj_name) {
 complete <- function(type) {
   assert_is_type(type)
 
-  if (!is_bare_vector_type(type)) {
-    type <- type |> add_trait(vector_trait())
-  }
   type |>
+    add_trait(vector_trait(), skip = is_bare_vector_type) |>
     add_trait(complete_trait())
 }
 
@@ -119,10 +115,8 @@ method(trait_describe, complete_trait) <- function(trait, obj_name) {
 unduplicated <- function(type) {
   assert_is_type(type)
 
-  if (!is_bare_vector_type(type)) {
-    type <- type |> add_trait(vector_trait())
-  }
   type |>
+    add_trait(vector_trait(), skip = is_bare_vector_type) |>
     add_trait(unduplicated_trait())
 }
 
@@ -429,11 +423,8 @@ bounded <- function(type, left = NULL, right = NULL, bounds = "[]") {
   }
   assert_match(bounds, c("[]", "[)", "(]", "()"))
 
-  if (!is_bare_vector_type(type)) {
-    type <- type |> add_trait(vector_trait())
-  }
-
   type |>
+    add_trait(vector_trait(), skip = is_bare_vector_type) |>
     add_trait(
       bounded_trait(
         left = left,
@@ -562,11 +553,8 @@ contains <- function(type, values) {
     abort_bad_input("{.arg values} must be non-empty.")
   }
 
-  if (!is_bare_vector_type(type)) {
-    type <- type |> add_trait(vector_trait())
-  }
-
   type |>
+    add_trait(vector_trait(), skip = is_bare_vector_type) |>
     add_trait(contains_trait(values = unique(values)))
 }
 
@@ -618,11 +606,8 @@ within <- function(type, values) {
     abort_bad_input("{.arg values} must be non-empty.")
   }
 
-  if (!is_bare_vector_type(type)) {
-    type <- type |> add_trait(vector_trait())
-  }
-
   type |>
+    add_trait(vector_trait(), skip = is_bare_vector_type) |>
     add_trait(within_trait(values = unique(values)))
 }
 
@@ -674,11 +659,8 @@ setequal_to <- function(type, values) {
     abort_bad_input("{.arg values} must be non-empty.")
   }
 
-  if (!is_bare_vector_type(type)) {
-    type <- type |> add_trait(vector_trait())
-  }
-
   type |>
+    add_trait(vector_trait(), skip = is_bare_vector_type) |>
     add_trait(setequal_to_trait(values = unique(values)))
 }
 
@@ -733,11 +715,8 @@ same_as <- function(type, values) {
     abort_bad_input("{.arg values} must be non-empty.")
   }
 
-  if (!is_bare_vector_type(type)) {
-    type <- type |> add_trait(vector_trait())
-  }
-
   type |>
+    add_trait(vector_trait(), skip = is_bare_vector_type) |>
     add_trait(same_as_trait(values = values))
 }
 
@@ -790,11 +769,8 @@ disjoint_to <- function(type, values) {
     abort_bad_input("{.arg values} must be non-empty.")
   }
 
-  if (!is_bare_vector_type(type)) {
-    type <- type |> add_trait(vector_trait())
-  }
-
   type |>
+    add_trait(vector_trait(), skip = is_bare_vector_type) |>
     add_trait(disjoint_to_trait(values = unique(values)))
 }
 
@@ -816,6 +792,8 @@ method(trait_describe, disjoint_to_trait) <- function(trait, obj_name) {
 
 #nocov start
 
+## vector ----------------------------------------------------------------------
+
 vector_trait <- new_trait("vector")
 
 method(trait_test, vector_trait) <- function(trait, obj) {
@@ -834,6 +812,8 @@ method(trait_diagnose, vector_trait) <- function(trait, obj, obj_name) {
 method(trait_describe, vector_trait) <- function(trait, obj_name) {
   format_styled("{.arg {obj_name}} is a {.pkg vctrs} style vector.")
 }
+
+## numeric ----------------------------------------------------------------------
 
 # Not implementing as a type union as `is.numeric()` is more lenient than `t_int || t_dbl`
 numeric_trait <- new_trait("numeric")
@@ -855,9 +835,49 @@ method(trait_describe, numeric_trait) <- function(trait, obj_name) {
   format_styled("{.arg {obj_name}} is a numeric vector.")
 }
 
+## function --------------------------------------------------------------------
+
+function_trait <- new_trait("function")
+
+method(trait_test, function_trait) <- function(trait, obj) {
+  is.function(obj)
+}
+
+method(trait_diagnose, function_trait) <- function(trait, obj, obj_name) {
+  c(
+    x = format_styled(
+      "{.arg {obj_name}} must be a function, ",
+      "not <<fmt_r_type(obj)>>."
+    )
+  )
+}
+
+method(trait_describe, function_trait) <- function(trait, obj_name) {
+  format_styled("{.arg {obj_name}} is a function.")
+}
+
 #nocov end
 
 # helpers ----------------------------------------------------------------------
+
+add_trait <- function(type, trait, skip = \(x) FALSE) {
+  if (is_type_union(type)) {
+    type@types <- map(type@types, add_trait, trait, skip = skip)
+    return(type)
+  }
+
+  if (skip(type)) {
+    return(type)
+  }
+  current_traits <- type@traits
+  duplicated <- any(map_lgl(current_traits, identical, trait))
+  if (duplicated) {
+    return(type)
+  }
+
+  type@traits <- c(current_traits, trait)
+  type
+}
 
 is_bare_vector_type <- function(type) {
   vector_types <- c("double", "integer", "logical", "character", "complex", "raw", "list")

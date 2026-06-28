@@ -168,7 +168,7 @@ typed <- function(..., returns = NULL) {
       arg_sym = args_syms
     ),
     function(arg_type, arg_name, arg_sym) {
-      if (rlang::is_empty(arg_type@traits)) {
+      if (!is_type_union(arg_type) && rlang::is_empty(arg_type@traits)) {
         return(NULL)
       }
       arg_assertion_expr(arg_type, arg_name, arg_sym, error_call = parent_frame)
@@ -380,11 +380,18 @@ dots_assertion_expr <- function(arg_type, error_call) {
 
 insert_returns_type <- function(body, returns_type) {
   type_wrap_result <- function(expr, type) {
-    rlang::call2(
-      "inline_result_assert_type",
-      value = expr,
-      type = type,
-      .ns = "type"
+    rlang::expr(
+      if (base::is.null(!!rlang::call2(
+        "inline_assert_type",
+        obj = expr,
+        obj_name = "<result>",
+        type = type,
+        error_header = "Return value is mistyped.",
+        error_subclass = "type_error_mistyped_arg",
+        .ns = "type"
+      ))) {
+        !!expr 
+      }
     )
   }
   update_returns <- function(expr, returns_type) {
@@ -424,11 +431,10 @@ insert_returns_type <- function(body, returns_type) {
 #' 
 #' These functions are inserted into [typed()] functions and are not meant
 #' for external use. They are exported only to ensure that [typed()] functions
-#' call the correct helper, e.g. `type::inline_result_assert_type()`, and
-#' not a globally defined function, e.g. `inline_result_assert_type()`.
+#' call the correct helper, e.g. `type::inline_assert_type()`, and
+#' not a globally defined function, e.g. `inline_assert_type()`.
 #' 
 #' @param type,.type A type.
-#' @param value A value to be checked.
 #' @param arg An argument to be checked.
 #' @param arg_name An argument name to use in error messages.
 #' @param obj An object to be checked.
@@ -440,8 +446,36 @@ insert_returns_type <- function(body, returns_type) {
 #' @name inlined-functions
 #' 
 #' @examples
-#' try(inline_result_assert_type(10L, t_chr))
+#' try(inline_dots_assert_type(10L, t_chr))
 NULL
+
+#' @rdname inlined-functions
+#' @export
+inline_assert_type <- function(
+  obj,
+  obj_name, 
+  type,
+  error_header,
+  error_subclass = character(),
+  error_call = rlang::caller_env()
+) {
+  if (is_type_union(type)) {
+    result <- obj_inspect_type_union(obj, obj_name, type)
+  } else {
+    result <- obj_inspect_type_single(obj, obj_name, type)
+  }
+
+  if (result$success) {
+    return(invisible())
+  }
+
+  inline_abort_mistyped(
+    type = type,
+    message = c(error_header, result$message),
+    error_subclass = error_subclass,
+    error_call = error_call
+  )
+}
 
 #' @rdname inlined-functions
 #' @export
@@ -451,43 +485,14 @@ inline_arg_assert_type <- function(
   arg_name, 
   error_call = rlang::caller_env()
 ) {
-  for (trait in type@traits) {
-    if (!rlang::is_true(trait_test(trait, arg))) {
-      inline_abort_mistyped(
-        type = type,
-        message = c(
-          format_styled("Argument {.arg {arg_name}} is mistyped."),
-          trait_diagnose(trait, arg, arg_name)
-        ),
-        what = "arg",
-        error_call = error_call
-      )
-    }
-  }
-  return(invisible())
-}
-
-#' @rdname inlined-functions
-#' @export
-inline_result_assert_type <- function(
-  value, 
-  type, 
-  error_call = rlang::caller_env()
-) {
-  for (trait in type@traits) {
-    if (!rlang::is_true(trait_test(trait, value))) {
-      inline_abort_mistyped(
-        type = type,
-        message = c(
-          format_styled("Return value is mistyped."),
-          trait_diagnose(trait, value, "<result>")
-        ),
-        error_call = error_call,
-        what = "arg"
-      )
-    }
-  }
-  value
+  inline_assert_type(
+    obj = arg,
+    obj_name = arg_name,
+    type = type,
+    error_header = format_styled("Argument {.arg {arg_name}} is mistyped."),
+    error_subclass = "type_error_mistyped_arg",
+    error_call = error_call
+  )
 }
 
 #' @rdname inlined-functions

@@ -76,6 +76,22 @@ has <- function(type, selector, on_type) {
   assert_is_type(type)
   assert_is_selector(selector)
   assert_is_type(on_type)
+
+  if (is_type_union(on_type)) {
+    types <- on_type@types
+    for (utype in types) {
+      has_trait <- any(map_lgl(utype@traits, S7::S7_inherits, has_on_trait))
+      if (any(has_trait)) {
+        abort_bad_input(
+          c(
+            format_styled("Nested {.fn has} traits on type unions are unsupported."),
+            x = format_styled("{.arg on_type} is a type union with a {.fn has} trait.")
+          )
+        )
+      }
+    }
+  }
+
   type |> add_trait(has_on_trait(selector = selector, on_type = on_type))
 }
 
@@ -106,15 +122,36 @@ method(trait_diagnose, has_on_trait) <- function(trait, obj, obj_name) {
     ))
   }
 
+  on_is_type_union <- is_type_union(on_type)
   if (selector@plural) {
     labels <- selector@labeller(obj_name, obj)
     for (i in seq_along(value)) {
-      if (!type_test(on_type, value[[i]])) {
-        return(type_diagnose(on_type, value[[i]], untick(labels[[i]])))
+      if (on_is_type_union) {
+        result <- obj_inspect_type_union(
+          obj = value[[i]], 
+          obj_name = untick(labels[[i]]),
+          type = on_type
+        )
+        if (!result$success) {
+          return(result$message)
+        } 
+      } else {
+        if (!type_test(on_type, value[[i]])) {
+          return(type_diagnose(on_type, value[[i]], untick(labels[[i]])))
+        }
       }
     }
   } else {
-    type_diagnose(on_type, value, untick(selector@labeller(obj_name, obj)))
+    if (on_is_type_union) {
+      result <- obj_inspect_type_union(
+        obj = value, 
+        obj_name = untick(selector@labeller(obj_name, obj)),
+        type = on_type
+      )
+      result$message
+    } else {
+      type_diagnose(on_type, value, untick(selector@labeller(obj_name, obj)))
+    }
   }
 }
 
@@ -122,8 +159,20 @@ method(trait_describe, has_on_trait) <- function(trait, obj_name) {
   selector <- trait@selector
   on_type <- trait@on_type
 
-  if (selector@plural) {
-    return(paste("Every element of", str_lower1(type_describe(trait@on_type, obj_name))))
+  type_describe_on <- if (selector@plural) {
+    function(type) { paste("Every element of", str_lower1(type_describe(type, obj_name))) }
+  } else {
+    obj_name <- untick(selector@labeller(obj_name, NULL))
+    function(type) { type_describe(type, obj_name) }
   }
-  type_describe(on_type, untick(selector@labeller(obj_name, NULL)))
+
+  if (!is_type_union(on_type)) {
+    return(type_describe_on(on_type))
+  }
+
+  on_types <- on_type@types
+  unlist(map(
+    seq_along(on_types),
+    \(i) glue::glue("Option {i} of {length(on_types)}: {type_describe_on(on_types[[i]])}")
+  ))
 }

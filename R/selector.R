@@ -184,7 +184,6 @@ on_elm_impl <- function(index) {
 #' @export
 on_data <- function() {
   selector_context_assert()
-  assert_is_index(index)
   selector(
     accessor = \(obj) {
       attributes(obj) <- NULL

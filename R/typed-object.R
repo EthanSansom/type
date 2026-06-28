@@ -92,7 +92,7 @@
       "inline_abort_mistyped",
       type = type,
       message = quote(glue::glue("Can't assign to the constant `{NAME}`.")),
-      what = "obj",
+      error_subclass = "type_error_mistyped_obj",
       error_call = parent_frame,
       .ns = "type"
     )
@@ -134,7 +134,7 @@
         glue::glue("Attempted to assign a mistyped value to `{NAME}`."),
         validation_result
       )),
-      what = "obj",
+      error_subclass = "type_error_mistyped_obj",
       error_call = parent_frame,
       .ns = "type"
     )
@@ -180,10 +180,13 @@
 #' @rdname inlined-functions
 #' @export
 inline_obj_type_validate <- function(obj, obj_name, type) {
-  for (trait in type@traits) {
-    if (!rlang::is_true(trait_test(trait, obj))) {
-      return(trait_diagnose(trait, obj, obj_name))
-    }
+  if (is_type_union(type)) {
+    result <- obj_inspect_type_union(obj, obj_name, type)
+  } else {
+    result <- obj_inspect_type_single(obj, obj_name, type)
+  }
+  if (!result$success) {
+    result$message
   }
 }
 
