@@ -105,13 +105,13 @@ t_coords <- t_list |>
   has(on(names), t_chr |> setequal_to(c("lat", "lon"))) |>
   has(on_elm("lat"), t_dbl |> bounded(-90, 90)) |>
   has(on_elm("lon"), t_dbl |> bounded(-180, 180)) |>
-  has_relation(same_sized(on_elms(c("lat", "lon"))
+  has_relation(same_sized(on_elms(c("lat", "lon"))))
 
 good <- list(lat = c(70, 20, -50), lon = c(100, 0, 85))
-obj_is_type(good)
+obj_is_type(good, t_coords)
 
 bad <- list(lat = c(1, 7), lon = 90)
-obj_inspect_type(bad)
+obj_inspect_type(bad, t_coords)
 
 }
 \seealso{

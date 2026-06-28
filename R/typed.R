@@ -475,6 +475,9 @@ insert_returns_type <- function(body, returns_type) {
 #' @param obj An object to be checked.
 #' @param obj_name An object name to use in error messages.
 #' @param error_call,.error_call The call to use in error messages.
+#' @param error_subclass An error class.
+#' @param error_header An error message header.
+#' @param message An error message.
 #' @param ... Dots to be checked individually.
 #' @param dots A list of dots to be checked.
 #'

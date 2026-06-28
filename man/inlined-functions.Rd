@@ -54,9 +54,15 @@ inline_dotlist_assert_type(dots, type, error_call = rlang::caller_env())
 
 \item{type, .type}{A type.}
 
+\item{message}{An error message.}
+
+\item{error_subclass}{An error class.}
+
 \item{obj}{An object to be checked.}
 
 \item{obj_name}{An object name to use in error messages.}
+
+\item{error_header}{An error message header.}
 
 \item{arg}{An argument to be checked.}
 

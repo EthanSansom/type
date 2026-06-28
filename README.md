@@ -7,6 +7,7 @@
 
 [![Codecov test
 coverage](https://codecov.io/gh/EthanSansom/type/graph/badge.svg)](https://app.codecov.io/gh/EthanSansom/type)
+[![R-CMD-check](https://github.com/EthanSansom/type/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/EthanSansom/type/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 {type} provides a lightweight type system for R, meant for users to
@@ -309,7 +310,7 @@ print(str_remove)
 #> {
 #>     base::gsub(x = x, pattern = pattern, replacement = "", fixed = fixed)
 #> }
-#> <environment: 0x131c97518>
+#> <environment: 0x12102d318>
 #> Arguments:
 #> • `x` is a bare <character>.
 #> • `pattern` is a bare <character>.
@@ -378,7 +379,7 @@ print(safe_any)
 #> {
 #>     base::any(..., na.rm = na.rm)
 #> }
-#> <environment: 0x131c97518>
+#> <environment: 0x12102d318>
 #> Arguments:
 #> • Each element of `...` is a bare <logical>.
 #> • `na.rm` is a bare <logical>.
@@ -421,5 +422,5 @@ untyped(safe_any)
 #> {
 #>     base::any(..., na.rm = na.rm)
 #> }
-#> <environment: 0x131c97518>
+#> <environment: 0x12102d318>
 ```

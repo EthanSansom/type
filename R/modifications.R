@@ -21,8 +21,8 @@
 #'
 #' # optional() arguments may be missing
 #' f <- typed(function(x = optional(t_int)) {
-#'   if (missing(x)) "absent" else x)
-#' }
+#'   if (missing(x)) { "absent" } else { x }
+#' })
 #' f()
 #' f(1L)
 #'

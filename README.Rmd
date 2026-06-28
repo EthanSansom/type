@@ -18,6 +18,7 @@ knitr::opts_chunk$set(
 
 <!-- badges: start -->
 [![Codecov test coverage](https://codecov.io/gh/EthanSansom/type/graph/badge.svg)](https://app.codecov.io/gh/EthanSansom/type)
+[![R-CMD-check](https://github.com/EthanSansom/type/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/EthanSansom/type/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 {type} provides a lightweight type system for R, meant for users to quickly and

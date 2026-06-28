@@ -642,7 +642,7 @@ on_obj_labels <- function(obj, obj_name, selectors) {
   unlist(map(selectors, \(selector) selector@labeller(obj_name, obj)))
 }
 
-check_relation_dots <- function(dots, error_call = caller_env()) {
+check_relation_dots <- function(dots, error_call = rlang::caller_env()) {
   if (rlang::is_empty(dots)) {
     abort_bad_input(
       format_styled("Must supply at least one argument to {.arg ...}."),
