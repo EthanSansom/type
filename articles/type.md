@@ -2,12 +2,7 @@
 
 ``` r
 
-library(type)
-#> 
-#> Attaching package: 'type'
-#> The following object is masked from 'package:base':
-#> 
-#>     within
+library(type, warn.conflicts = FALSE)
 ```
 
 ## Types
