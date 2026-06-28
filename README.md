@@ -41,7 +41,7 @@ t_int %:% x(10L)
 ```
 
 A variable’s type may be declared using the `%:%` operator, which
-constrains the values which can be assigned to a variable.
+constrains the values which may be assigned to it.
 
 ``` r
 # Assigning another integer to `x` is okay
@@ -57,7 +57,7 @@ x <- "A"
 
 Every type in {type} is composed of traits, functions which add
 additional restrictions to a type. For example, the `t_string` type is
-built like so:
+built from the `sized()` and `complete()` traits:
 
 ``` r
 # A string is:
@@ -151,7 +151,7 @@ print(safe_log)
 #> {
 #>     base::log(x, base = base)
 #> }
-#> <environment: 0x116efa318>
+#> <environment: 0x107a4a518>
 #> Arguments:
 #> • `x` is a numeric vector.
 #> • `base` is a numeric vector.
@@ -192,7 +192,7 @@ print(safe_any)
 #> {
 #>     base::any(..., na.rm = na.rm)
 #> }
-#> <environment: 0x116efa318>
+#> <environment: 0x107a4a518>
 #> Arguments:
 #> • Each element of `...` is a bare <logical>.
 #> • `na.rm` is a bare <logical>.

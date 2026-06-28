@@ -54,7 +54,7 @@ t_int %:% x(10L)
 ```
 
 A variable's type may be declared using the `%:%` operator, which constrains the
-values which can be assigned to a variable.
+values which may be assigned to it.
 
 ```{r}
 # Assigning another integer to `x` is okay
@@ -65,7 +65,8 @@ x <- "A"
 ```
 
 Every type in {type} is composed of traits, functions which add additional
-restrictions to a type. For example, the `t_string` type is built like so:
+restrictions to a type. For example, the `t_string` type is built from the
+`sized()` and `complete()` traits:
 
 ```{r}
 # A string is:
