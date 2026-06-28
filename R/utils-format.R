@@ -173,11 +173,8 @@ fmt_at_locs <- function(where, place = c("location", "row")) {
   }
 }
 
-# TODO: We'll need to create our own obj_type_friendly()
-# - See: cli:::typename, cli:::friendly_type
-# - See rlang:::obj_type_friendly, rlang:::obj_type_oo
 fmt_r_type <- function(obj) {
-  rlang:::obj_type_friendly(obj)
+  obj_type_friendly(obj)
 }
 
 # Borrowed with thanks from {rlang}:
@@ -198,8 +195,6 @@ obj_oo_type <- function(obj) {
   }
 }
 
-# TODO: Possibly rounding and custom formatting for other objects
-# - See {ivs} iv_format()
 fmt_vec <- function(vec) {
   if (is.character(vec)) {
     chr_encode(vec)

@@ -15,7 +15,7 @@ Depends:
 Imports: 
     cli,
     glue,
-    rlang,
+    rlang (>= 1.1.0),
     S7,
     vctrs
 Suggests: 
