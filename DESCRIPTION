@@ -1,9 +1,14 @@
 Package: type
-Title: What the Package Does (One Line, Title Case)
+Title: Runtime Type Validation for Functions and Objects
 Version: 0.0.0.9000
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+    person(
+      "Ethan", "Sansom", 
+      email = "ethan.sansom29@gmail.com", 
+      role = c("aut", "cre", "cph"),
+      comment = c(ORCID = "0009-0000-1573-0186")
+    )
+Description: Provides a lightweight type system for 'R'. Types are represented as composable sets of predicates which a valid object must satisfy. Variables may be declared with a type, which is checked everytime the variable is assigned to. Additionally, function arguments and return values may be annotated with a type, which is validated each time the function is called.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

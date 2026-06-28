@@ -4,9 +4,9 @@
 \name{type-package}
 \alias{type}
 \alias{type-package}
-\title{type: What the Package Does (One Line, Title Case)}
+\title{type: Runtime Type Validation for Functions and Objects}
 \description{
-What the package does (one paragraph).
+Provides a lightweight type system for 'R'. Types are represented as composable sets of predicates which a valid object must satisfy. Variables may be declared with a type, which is checked everytime the variable is assigned to. Additionally, function arguments and return values may be annotated with a type, which is validated each time the function is called.
 }
 \seealso{
 Useful links:
@@ -17,11 +17,11 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: First Last \email{first.last@example.com}
+\strong{Maintainer}: Ethan Sansom \email{ethan.sansom29@gmail.com} (\href{https://orcid.org/0009-0000-1573-0186}{ORCID}) [copyright holder]
 
 Authors:
 \itemize{
-  \item First Last \email{first.last@example.com}
+  \item Ethan Sansom \email{ethan.sansom29@gmail.com} (\href{https://orcid.org/0009-0000-1573-0186}{ORCID}) [copyright holder]
 }
 
 }
