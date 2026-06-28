@@ -27,7 +27,7 @@
 #' | `t_env`     | An environment                                   |
 #' | `t_fun`     | A function                                       |
 #' | `t_vec`     | A [vctrs][vctrs::vctrs-package]-style vector     |
-#' | `t_num`     | An numeric (e.g. integer or double) vector       |
+#' | `t_num`     | A numeric (e.g. integer or double) vector       |
 #' | `t_lgl`     | A bare logical vector                            |
 #' | `t_bool`    | A single `TRUE` or `FALSE`                       |
 #' | `t_int`     | A bare integer vector                            |

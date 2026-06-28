@@ -120,25 +120,25 @@ object is mistyped.
 
 {type} includes the following base types for common R objects:
 
-| Object        | Matches                                    |
-|---------------|--------------------------------------------|
-| `t_any`       | Any object                                 |
-| `t_null`      | `NULL`                                     |
-| `t_list`      | A list                                     |
-| `t_env`       | An environment                             |
-| `t_fun`       | A function                                 |
-| `t_vec`       | A {vctrs} style vector                     |
-| `t_num`       | An numeric (e.g. integer or double) vector |
-| `t_lgl`       | A bare logical vector                      |
-| `t_bool`      | A single `TRUE` or `FALSE`                 |
-| `t_int`       | A bare integer vector                      |
-| `t_dbl`       | A bare double vector                       |
-| `t_chr`       | A bare character vector                    |
-| `t_string`    | A single non-`NA` string                   |
-| `t_dataframe` | A data frame                               |
-| `t_factor`    | A factor                                   |
-| `t_date`      | A `Date`                                   |
-| `t_posixct`   | A `POSIXct` datetime                       |
+| Object        | Matches                                   |
+|---------------|-------------------------------------------|
+| `t_any`       | Any object                                |
+| `t_null`      | `NULL`                                    |
+| `t_list`      | A list                                    |
+| `t_env`       | An environment                            |
+| `t_fun`       | A function                                |
+| `t_vec`       | A {vctrs} style vector                    |
+| `t_num`       | A numeric (e.g. integer or double) vector |
+| `t_lgl`       | A bare logical vector                     |
+| `t_bool`      | A single `TRUE` or `FALSE`                |
+| `t_int`       | A bare integer vector                     |
+| `t_dbl`       | A bare double vector                      |
+| `t_chr`       | A bare character vector                   |
+| `t_string`    | A single non-`NA` string                  |
+| `t_dataframe` | A data frame                              |
+| `t_factor`    | A factor                                  |
+| `t_date`      | A `Date`                                  |
+| `t_posixct`   | A `POSIXct` datetime                      |
 
 ### Traits
 
@@ -312,7 +312,7 @@ print(str_remove)
 #> {
 #>     base::gsub(x = x, pattern = pattern, replacement = "", fixed = fixed)
 #> }
-#> <environment: 0x120be0f18>
+#> <environment: 0x11d98c518>
 #> Arguments:
 #> • `x` is a bare <character>.
 #> • `pattern` is a bare <character>.
@@ -381,7 +381,7 @@ print(safe_any)
 #> {
 #>     base::any(..., na.rm = na.rm)
 #> }
-#> <environment: 0x120be0f18>
+#> <environment: 0x11d98c518>
 #> Arguments:
 #> • Each element of `...` is a bare <logical>.
 #> • `na.rm` is a bare <logical>.
@@ -424,5 +424,5 @@ untyped(safe_any)
 #> {
 #>     base::any(..., na.rm = na.rm)
 #> }
-#> <environment: 0x120be0f18>
+#> <environment: 0x11d98c518>
 ```
