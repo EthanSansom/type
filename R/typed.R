@@ -497,7 +497,13 @@ inline_assert_type <- function(
   if (is_type_union(type)) {
     result <- obj_inspect_type_union(obj, obj_name, type)
   } else {
-    result <- obj_inspect_type_single(obj, obj_name, type)
+    result <- list(message = NULL, success = TRUE)
+    for (trait in type@traits) {
+      if (!trait_test(trait, obj)) {
+        result$message <- trait_diagnose(trait, obj, obj_name)
+        result$success <- FALSE
+      }
+    }
   }
 
   if (result$success) {
