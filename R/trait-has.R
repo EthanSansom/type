@@ -77,19 +77,13 @@ has <- function(type, selector, on_type) {
   assert_is_selector(selector)
   assert_is_type(on_type)
 
-  if (is_type_union(on_type)) {
-    types <- on_type@types
-    for (utype in types) {
-      has_trait <- any(map_lgl(utype@traits, S7::S7_inherits, has_on_trait))
-      if (any(has_trait)) {
-        abort_bad_input(
-          c(
-            format_styled("Nested {.fn has} traits on type unions are unsupported."),
-            x = format_styled("{.arg on_type} is a type union with a {.fn has} trait.")
-          )
-        )
-      }
-    }
+  if (is_type_union(type)) {
+    abort_bad_input(
+      c(
+        format_styled("Applying the {.fn has} trait to a type union is unsupported."),
+        x = format_styled("{.arg type} is a type union.")
+      )
+    )
   }
 
   type |> add_trait(has_on_trait(selector = selector, on_type = on_type))
