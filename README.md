@@ -178,7 +178,7 @@ t_any |> has(on(names), t_chr |> contains(c("x", "y")))
 # Element `[[1]]` of an object must be a function
 t_any |> has(on_elm(1L), t_fun)
 #> <type>
-#> • `<object>[[1]]` is a bare <closure>.
+#> • `<object>[[1]]` is a function.
 
 # Every element of the object must be the same size
 t_list |> has_relation(same_sized(on_each()))
@@ -198,6 +198,7 @@ t_coordinates <- t_list |>
  
 good <- list(lat = c(51.5, 40.7), lon = c(-0.1, -74.0))
 bad <- list(lat = c(51.5, 200.0), lon = c(-0.1, -74.0, 0.0))
+worst <- list(x = "A")
  
 obj_is_type(good, t_coordinates)
 #> [1] TRUE
@@ -208,6 +209,12 @@ obj_inspect_type(bad, t_coordinates)
 #> ✔ `names(bad)` is the same as: `c("lat", "lon")`.
 #> ℹ `bad[["lat"]]` must be bounded by [-90, 90].
 #> ✖ `bad[["lat"]]` is out of bounds at location `2`.
+obj_inspect_type(worst, t_coordinates)
+#> Object `worst` does not have the expected type.
+#> ✔ `worst` is a bare <list>.
+#> ℹ `names(worst)` must be: `c("lat", "lon")`.
+#> ✖ `names(worst)` is missing 2 elements: `c("lat", "lon")`.
+#> ✖ `names(worst)` contains 1 unexpected element: `"x"`.
 ```
 
 `list_type()` and `dataframe_type()` provide a shorthand for typed
@@ -234,6 +241,7 @@ type:
 
 ``` r
 t_list_of_chr <- list_of_type(t_chr)
+
 obj_is_type(list("A", "B", "C"), t_list_of_chr)
 #> [1] TRUE
 obj_is_type(list("A", 2L, "C"), t_list_of_chr)
@@ -253,4 +261,165 @@ z <- 2L
 #> ℹ Run `last_type()` to get the expected type.
 ```
 
+### Type Unions
+
+Two or more types may be combined into a *type union*, which requires
+that an object satisfy at least one of the types’ constraints.
+
+``` r
+t_rownames <- type_union(t_int, t_chr) |> complete()
+
+obj_is_type(FALSE, t_rownames)
+#> [1] FALSE
+obj_is_type(1:3, t_rownames)
+#> [1] TRUE
+obj_is_type(c("a", "b", "c"), t_rownames)
+#> [1] TRUE
+```
+
+Failed type union checks report the unmet requirement of each type in
+the union:
+
+``` r
+obj_inspect_type(NA_integer_, t_rownames)
+#> Object `NA_integer_` does not have the expected type.
+#> • Type option 1 of 2:
+#> ✔ `NA_integer_` is a bare <integer>.
+#> ℹ `NA_integer_` must not contain missing elements.
+#> ✖ `NA_integer_` is NA at location `1`.
+#> • Type option 2 of 2:
+#> ✖ `NA_integer_` must be a bare <character>, not a bare <integer>.
+```
+
 ## Typed Functions
+
+A typed function is declared using `typed()`.
+
+``` r
+str_remove <- typed(function(
+  x = t_chr, 
+  pattern = t_string, 
+  fixed = t_bool %:% FALSE
+) {
+  base::gsub(x = x, pattern = pattern, replacement = "", fixed = fixed)
+})
+print(str_remove)
+#> <typed>
+#> function (x, pattern, fixed = FALSE) 
+#> {
+#>     base::gsub(x = x, pattern = pattern, replacement = "", fixed = fixed)
+#> }
+#> <environment: 0x131c97518>
+#> Arguments:
+#> • `x` is a bare <character>.
+#> • `pattern` is a bare <character>.
+#> • `pattern` is size 1.
+#> • `pattern` contains no missing values.
+#> • `fixed` is a bare <logical>.
+#> • `fixed` is size 1.
+#> • `fixed` contains no missing values.
+#> Returns:
+#> • `<result>` is an R object.
+```
+
+Arguments without default values are annotated using a type
+(e.g. `x = t_chr`) and default values are provided using the `%:%`
+operator.
+
+When called, a typed function validates each of its typed arguments,
+raising an error if an argument is mistyped.
+
+``` r
+str_remove("hello", pattern = "he")
+#> [1] "llo"
+str_remove("goodbye", pattern = NA_character_)
+#> Error in `str_remove()`:
+#> ! Argument `pattern` is mistyped.
+#> ℹ `pattern` must not contain missing elements.
+#> ✖ `pattern` is NA at location `1`.
+#> ℹ Run `last_type()` to get the expected type.
+```
+
+With `last_type()`, interactively debugging failed argument or object
+type checks is simple.
+
+``` r
+# What type was expected?
+t_expected <- last_type()
+print(t_expected)
+#> <type>
+#> • `<object>` is a bare <character>.
+#> • `<object>` is size 1.
+#> • `<object>` contains no missing values.
+
+# How does my input compare?
+pattern <- NA_character_
+obj_inspect_type(pattern, t_expected)
+#> Object `pattern` does not have the expected type.
+#> ✔ `pattern` is a bare <character>.
+#> ✔ `pattern` is size 1.
+#> ℹ `pattern` must not contain missing elements.
+#> ✖ `pattern` is NA at location `1`.
+```
+
+The return type of a function may be specified using the `returns`
+argument.
+
+``` r
+safe_any <- typed(
+  function(... = t_lgl, na.rm = t_bool %:% FALSE) {
+    base::any(..., na.rm = na.rm)
+  },
+  returns = t_lgl |> sized(1L)
+)
+print(safe_any)
+#> <typed>
+#> function (..., na.rm = FALSE) 
+#> {
+#>     base::any(..., na.rm = na.rm)
+#> }
+#> <environment: 0x131c97518>
+#> Arguments:
+#> • Each element of `...` is a bare <logical>.
+#> • `na.rm` is a bare <logical>.
+#> • `na.rm` is size 1.
+#> • `na.rm` contains no missing values.
+#> Returns:
+#> • `<result>` is a bare <logical>.
+#> • `<result>` is size 1.
+```
+
+Additionally, any relation compatible with `has_relation()` may also be
+used to define between-argument constraints. Here, we require that the
+`x`, `start`, and `stop` arguments of `safe_substr()` are either
+length-1 or the same length, using the `recyclable()` relation:
+
+``` r
+safe_substr <- typed(
+  recyclable(x, start, stop),
+  function(x = t_chr, start = t_int, stop = t_int) {
+    base::substr(x, start, stop)
+  },
+  returns = t_chr
+)
+
+safe_substr(c("works", "fine"), 1L, 2L)
+#> [1] "wo" "fi"
+safe_substr(c("this", "wont", "work"), 1:2, 1:2)
+#> Error in `safe_substr()`:
+#> ! Arguments `x`, `start`, and `stop` must be recyclable.
+#> ✖ `x` (size 3) and `start` (size 2) are incompatible sizes.
+```
+
+Type checks may be removed from any typed function using `untyped()`,
+which is useful for bypassing argument validation in pre-validated or
+performance sensitive areas of code.
+
+``` r
+untyped(safe_any)
+#> function (..., na.rm = FALSE) 
+#> {
+#>     base::any(..., na.rm = na.rm)
+#> }
+#> <environment: 0x131c97518>
+```
