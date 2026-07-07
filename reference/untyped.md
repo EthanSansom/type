@@ -33,7 +33,7 @@ print(foo)
 #> {
 #>     x
 #> }
-#> <environment: 0x55df1c4a6728>
+#> <environment: 0x55a8767a6280>
 #> Arguments:
 #> • `x` is a bare <integer>.
 #> Returns:
@@ -43,5 +43,5 @@ print(untyped(foo))
 #> {
 #>     x
 #> }
-#> <environment: 0x55df1c4a6728>
+#> <environment: 0x55a8767a6280>
 ```
